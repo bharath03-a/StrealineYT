@@ -2,3 +2,4 @@ secrets/
 .env
 .ipynb_checkpoints
 .DS_store
+.vscode
