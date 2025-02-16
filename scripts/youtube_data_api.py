@@ -2,6 +2,8 @@ import os
 import sys
 import json
 import logging
+from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaIoBaseDownload
 
 # Loading custom modules
 sys.path.append("../helper/")
@@ -9,7 +11,7 @@ from helper import client as CL
 from helper import constants as CNST
 
 # Class for getting Data from YouTube
-class LoadDataYT(CL.YouTubeAPI):
+class LoadDataYT(CL.YouTubeDataAPI):
     # TODO: Need to  identify the output types for each of these API calls
     # TODO: Test these outputs, understand what they return
     # TODO: Implement Pydantic
@@ -128,4 +130,94 @@ class LoadDataYT(CL.YouTubeAPI):
 
         except Exception as e:
             logging.error(f"An error occurred while fetching captions: {e}", exc_info=True)
+            return None
+        
+
+# Class for getting Data from YouTube Analytics and Reporting API
+class LoadDataYT(CL.YouTubeARAPI):
+    # TODO: Need to  identify the output types for each of these API calls
+    # TODO: Test these outputs, understand what they return
+    # TODO: Implement Pydantic
+    # TODO: Look at the documentation and check once these look really interesting
+
+    def __init__(self, settings):
+        super().__init__(settings)
+        self.youtube_analytics = self.build_analytics_client(CNST.SERVICE_ACCOUNT_FILE)
+        self.youtube_reporting = self.build_reporting_client(CNST.SERVICE_ACCOUNT_FILE)
+
+    def retrieve_analytics_report(self, params):
+        try:
+            if not self.youtube_analytics:
+                logging.error("YouTube Analytics service is not initialized.")
+                return None
+
+            response = self.youtube_analytics.reports().query(**params).execute()
+            logging.info("Analytics report retrieved successfully.")
+            return response
+        except HttpError as e:
+            logging.error(f"An HTTP error occurred: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"An error occurred while retrieving analytics report: {e}")
+            return None
+        
+    def create_reporting_job(self, report_type_id, name):
+        try:
+            if not self.youtube_reporting:
+                logging.error("YouTube Reporting service is not initialized.")
+                return None
+
+            job_body = {
+                'reportTypeId': report_type_id,
+                'name': name
+            }
+            response = self.youtube_reporting.jobs().create(body=job_body).execute()
+            logging.info(f"Reporting job '{name}' created successfully.")
+            return response
+        except HttpError as e:
+            logging.error(f"An HTTP error occurred: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"An error occurred while creating reporting job: {e}")
+            return None
+        
+    def list_reporting_jobs(self):
+        try:
+            if not self.youtube_reporting:
+                logging.error("YouTube Reporting service is not initialized.")
+                return None
+
+            response = self.youtube_reporting.jobs().list().execute()
+            logging.info("Reporting jobs retrieved successfully.")
+            return response.get('jobs', [])
+        except HttpError as e:
+            logging.error(f"An HTTP error occurred: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"An error occurred while listing reporting jobs: {e}")
+            return None
+        
+    def download_report(self, job_id, report_id, download_path):
+        try:
+            if not self.youtube_reporting:
+                logging.error("YouTube Reporting service is not initialized.")
+                return None
+
+            request = self.youtube_reporting.media().download(
+                resourceName=f'reportTypes/{job_id}/reports/{report_id}'
+            )
+            with open(download_path, 'wb') as fh:
+                downloader = MediaIoBaseDownload(fh, request)
+                done = False
+                while not done:
+                    status, done = downloader.next_chunk()
+                    logging.info(f"Download {int(status.progress() * 100)}%.")
+
+            logging.info(f"Report downloaded successfully to {download_path}.")
+            return download_path
+        except HttpError as e:
+            logging.error(f"An HTTP error occurred: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"An error occurred while downloading report: {e}")
             return None
