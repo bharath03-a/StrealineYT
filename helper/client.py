@@ -24,10 +24,10 @@ class YouTubeDataAPI:
     def __init__(self):
         self.settings = None
         try:
-            self.settings = Settings()
+            self.settings = Settings(google_api_key=os.getenv("GOOGLE_API_KEY"))
             logging.info("Settings loaded and validated.")
         except ValidationError as e:
-            logging.error(f"Error loading settings: {e}")
+            logging.error(f"Error loading settings: - {e}")
             sys.exit(1)
     
     def build_auth_client(self):
@@ -84,7 +84,7 @@ class YouTubeARAPI:
     def __init__(self):
         self.settings = None
         try:
-            self.settings = Settings()
+            self.settings = Settings(google_api_key=os.getenv("GOOGLE_API_KEY"))
             logging.info("Settings loaded and validated.")
         except ValidationError as e:
             logging.error(f"Error loading settings: {e}")

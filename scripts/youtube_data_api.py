@@ -16,8 +16,8 @@ class LoadDataYT(CL.YouTubeDataAPI):
     # TODO: Test these outputs, understand what they return
     # TODO: Implement Pydantic
 
-    def __init__(self, settings):
-        super().__init__(settings)
+    def __init__(self):
+        super().__init__()
         self.youtube_auth = self.build_auth_client()
         self.youtube_oauth = self.build_oauth_client(CNST.SERVICE_ACCOUNT_FILE)
 
@@ -119,11 +119,7 @@ class LoadDataYT(CL.YouTubeDataAPI):
 
             captions = []
             for item in response.get("items", []):
-                captions.append({
-                    "id": item["id"],
-                    "language": item["snippet"]["language"],
-                    "name": item["snippet"]["name"]
-                })
+                captions.append(item)
 
             logging.info(f"Total captions fetched: {len(captions)}")
             return captions
@@ -134,14 +130,14 @@ class LoadDataYT(CL.YouTubeDataAPI):
         
 
 # Class for getting Data from YouTube Analytics and Reporting API
-class LoadDataYT(CL.YouTubeARAPI):
+class LoadAR(CL.YouTubeARAPI):
     # TODO: Need to  identify the output types for each of these API calls
     # TODO: Test these outputs, understand what they return
     # TODO: Implement Pydantic
     # TODO: Look at the documentation and check once these look really interesting
 
-    def __init__(self, settings):
-        super().__init__(settings)
+    def __init__(self):
+        super().__init__()
         self.youtube_analytics = self.build_analytics_client(CNST.SERVICE_ACCOUNT_FILE)
         self.youtube_reporting = self.build_reporting_client(CNST.SERVICE_ACCOUNT_FILE)
 
