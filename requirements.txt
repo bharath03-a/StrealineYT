@@ -14,3 +14,4 @@ asgiref==3.8.1
 apache-airflow-providers-apache-kafka==1.7.0
 apache-airflow-providers-apache-spark==5.0.0
 apache-airflow-providers-apache-hive==9.0.0
+pendulum==3.0.0
