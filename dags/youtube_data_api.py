@@ -6,7 +6,7 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
 
 # Loading custom modules
-sys.path.append("../helper/")
+sys.path.append("./helper")
 from helper import client as CL
 from helper import constants as CNST
 
