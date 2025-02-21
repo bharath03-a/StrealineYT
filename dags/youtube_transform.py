@@ -1,6 +1,35 @@
 import polars as pl
 import logging
 
+def transform_youtube_results(search_results):
+    """
+    Transforms raw YouTube API search results into a structured Polars DataFrame.
+    """
+    try:
+        extracted_data = [
+            {
+                "etag": item.get("etag"),
+                "kind": item.get("kind"),
+                "channelId": item["id"].get("channelId"),
+                "publishedAt": item["snippet"].get("publishedAt"),
+                "title": item["snippet"].get("title"),
+                "description": item["snippet"].get("description"),
+                "channelTitle": item["snippet"].get("channelTitle"),
+                "liveBroadcastContent": item["snippet"].get("liveBroadcastContent"),
+            }
+            for item in search_results
+            if "id" in item and item["id"].get("channelId")
+        ]
+
+        df = pl.DataFrame(extracted_data)
+
+        logging.info(f"Successfully transformed {len(df)} records into Polars DataFrame.")
+        return df.to_dicts()
+
+    except Exception as e:
+        logging.error(f"Error during transformation: {e}", exc_info=True)
+        return None
+
 def transform_channel_data(response):
     """
     Transforms YouTube API channel response into a structured Polars DataFrame.
