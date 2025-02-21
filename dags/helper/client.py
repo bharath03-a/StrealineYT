@@ -10,7 +10,7 @@ import googleapiclient.discovery
 import googleapiclient.errors
 
 # Loading custom modules
-sys.path.append("./")
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import constants as CNST
 
 # Loading environment variables

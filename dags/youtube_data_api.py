@@ -1,12 +1,11 @@
 import os
 import sys
-import json
 import logging
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaIoBaseDownload
 
 # Loading custom modules
-sys.path.append("./helper")
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from helper import client as CL
 from helper import constants as CNST
 
