@@ -1,6 +1,7 @@
 import os
 import sys
 import pendulum
+import logging
 import polars as pl
 from airflow.decorators import dag, task
 
@@ -58,17 +59,44 @@ def youtube_video_pipeline():
     @task()
     def fetch_video_info(video_ids):
         """fetches video details from YouTube API."""
-        pass
+        try:
+            params = {"part": "snippet,statistics", "id": ",".join(video_ids)}
+            logging.info(f"Fetching details for {len(video_ids)} videos.")
+            response = LoadDataYT().get_videos(params)
+            return response if response else []
+        except Exception as e:
+            logging.error(f"Error fetching video data: {e}", exc_info=True)
+            return None
 
     @task()
     def fetch_comments(video_ids):
         """fetches comments for each video."""
-        pass
+        try:
+            all_comments = {}
+            for video_id in video_ids:
+                params = {"part": "snippet", "videoId": video_id, "maxResults": 100}
+                logging.info(f"Fetching comments for video: {video_id}")
+                comments = LoadDataYT().get_comments(params)
+                all_comments[video_id] = comments if comments else []
+            return all_comments
+        except Exception as e:
+            logging.error(f"Error fetching comments: {e}", exc_info=True)
+            return None
 
     @task()
     def fetch_captions(video_ids):
         """fetches captions for each video."""
-        pass
+        try:
+            all_captions = {}
+            for video_id in video_ids:
+                params = {"part": "snippet", "videoId": video_id}
+                logging.info(f"Fetching captions for video: {video_id}")
+                captions = LoadDataYT().get_captions(params)
+                all_captions[video_id] = captions if captions else []
+            return all_captions
+        except Exception as e:
+            logging.error(f"Error fetching captions: {e}", exc_info=True)
+            return None
 
     # DAG Flow
     search_results = search_youtube()
