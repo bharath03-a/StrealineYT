@@ -1,6 +1,7 @@
 import os
 import sys
 import pendulum
+import polars as pl
 from airflow.decorators import dag, task
 
 # importing custom libraries
@@ -35,12 +36,24 @@ def youtube_video_pipeline():
                   "order": "videoCount",
                   "publishedAfter": "2018-01-01T00:00:00Z",
             }
-        return LoadDataYT.get_search_results(params)
+        
+        search_results = LoadDataYT.get_search_results(params, max_results=5)
+        results = TRANSFORM.transform_youtube_results(search_results)
+
+        return results
+    
+    @task()
+    def extract_channel_ids(result):
+        """converts JSON-serializable data back to Polars DataFrame and extract channel IDs.
+        """
+        df = pl.DataFrame(result)
+        return df["channelId"].to_list()
 
     @task()
     def extract_video_ids(search_results):
         """extracts video IDs from search results."""
-        pass
+        df = pl.DataFrame(search_results)
+        return df["videoId"].to_list()
 
     @task()
     def fetch_video_info(video_ids):

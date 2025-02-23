@@ -70,3 +70,33 @@ def transform_channel_data(response):
     except Exception as e:
         logging.error(f"Error transforming channel data: {e}", exc_info=True)
         return []
+    
+def transform_youtube_video_results(search_results):
+    """
+    Transforms raw YouTube API search results into a structured Polars DataFrame.
+    """
+    try:
+        extracted_data = [
+            {
+                "etag": item.get("etag"),
+                "kind": item.get("kind"),
+                "videoId": item["id"].get("videoId"),
+                "channelId": item["snippet"].get("channelId"),
+                "publishedTime": item["snippet"].get("publishedAt"),
+                "title": item["snippet"].get("title"),
+                "channelTitle": item["snippet"].get("channelTitle"),
+                "description": item["snippet"].get("description"),
+                "liveBroadcastContent": item["snippet"].get("liveBroadcastContent"),
+            }
+            for item in search_results
+            if "id" in item and item["id"].get("videoId")
+        ]
+
+        df = pl.DataFrame(extracted_data)
+
+        logging.info(f"Successfully transformed {len(df)} records into Polars DataFrame.")
+        return df.to_dicts()
+
+    except Exception as e:
+        logging.error(f"Error during transformation: {e}", exc_info=True)
+        return None
