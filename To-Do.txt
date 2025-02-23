@@ -1,0 +1,8 @@
+- After testing these function run these as airflow DAGS
+- Then create Kafka Topics, and configure producers and consumer adn try to pushh to Kafka
+
+- If everything is done create a workflow as to what is needed here?
+- Then try to setup hive over here and sink the raw data to hive db too...
+- Setup Spark Streaming or Kafka Streaming
+- Then perform some Data transformations - understanding the data or some ML stuff?
+- NLP stuff can be done - like understanding the comments
