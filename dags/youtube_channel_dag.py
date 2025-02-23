@@ -101,40 +101,40 @@ def youtube_streams_etl_pipeline():
 
 # ----------------------- Testing Code -----------------------
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+# if __name__ == "__main__":
+#     logging.basicConfig(level=logging.INFO)
 
-    params = {
-        'part': 'snippet',
-        'q': 'machine learning|deep learning -statistics',
-        'type': 'channel',
-        'maxResults': 2,
-        'order': 'videoCount',
-        'publishedAfter': '2018-01-01T00:00:00Z',
-    }
-    search_results = DataAPI  .get_search_results(params=params, max_results=5)
-    transformed_search_results = TRANSFORM.transform_youtube_results(search_results)
-    save_to_json(transformed_search_results, "../data/search_results.json")
+#     params = {
+#         'part': 'snippet',
+#         'q': 'machine learning|deep learning -statistics',
+#         'type': 'channel',
+#         'maxResults': 2,
+#         'order': 'videoCount',
+#         'publishedAfter': '2018-01-01T00:00:00Z',
+#     }
+#     search_results = DataAPI  .get_search_results(params=params, max_results=5)
+#     transformed_search_results = TRANSFORM.transform_youtube_results(search_results)
+#     save_to_json(transformed_search_results, "../data/search_results.json")
 
-    df = pl.DataFrame(transformed_search_results)
-    channel_ids = df["channelId"].to_list()
-    save_to_json(channel_ids, "../data/channel_ids.json")
+#     df = pl.DataFrame(transformed_search_results)
+#     channel_ids = df["channelId"].to_list()
+#     save_to_json(channel_ids, "../data/channel_ids.json")
 
-    BATCH_SIZE = 20
-    all_channel_data = []
+#     BATCH_SIZE = 20
+#     all_channel_data = []
 
-    for i in range(0, len(channel_ids), BATCH_SIZE):
-        batch = channel_ids[i: i + BATCH_SIZE]
-        params = {
-            "part": "snippet,statistics",
-            "id": ",".join(batch)
-        }
+#     for i in range(0, len(channel_ids), BATCH_SIZE):
+#         batch = channel_ids[i: i + BATCH_SIZE]
+#         params = {
+#             "part": "snippet,statistics",
+#             "id": ",".join(batch)
+#         }
 
-        response = DataAPI  .get_channels(params)
-        if response and "items" in response:
-            all_channel_data.extend(response["items"])
+#         response = DataAPI  .get_channels(params)
+#         if response and "items" in response:
+#             all_channel_data.extend(response["items"])
 
-    transformed_channel_data = TRANSFORM.transform_channel_data({"items": all_channel_data})
-    save_to_json(transformed_channel_data, "../data/channel_info.json")
+#     transformed_channel_data = TRANSFORM.transform_channel_data({"items": all_channel_data})
+#     save_to_json(transformed_channel_data, "../data/channel_info.json")
 
-    logging.info("Testing completed. JSON files created.")
+#     logging.info("Testing completed. JSON files created.")

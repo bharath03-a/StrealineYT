@@ -36,6 +36,7 @@ class LoadDataYT(CL.YouTubeDataAPI):
             return None
 
     def get_videos(self, params, max_videos=50):
+        # TODO: Change this fuction as it is not the correct implementation of the API retreival
         try:
             request = self.youtube_auth.videos().list(**params)
 
@@ -94,14 +95,13 @@ class LoadDataYT(CL.YouTubeDataAPI):
 
             while request and len(all_comments) < max_comments:
                 response = request.execute()
-                for item in response.get("items", []):
-                    all_comments.append(item["snippet"]["topLevelComment"]["snippet"]["textDisplay"])
+                all_comments.extend(response.get("items", []))
 
                 if len(all_comments) >= max_comments:
                     all_comments = all_comments[:max_comments]
                     break
 
-                request = self.youtube_auth.commentThreads().list_next(request, response)
+            request = self.youtube_auth.commentThreads().list_next(request, response)
 
             logging.info(f"Total comments fetched: {len(all_comments)}")
             return all_comments
