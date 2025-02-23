@@ -101,9 +101,12 @@ def youtube_video_pipeline():
     # DAG Flow
     search_results = search_youtube()
     video_ids = extract_video_ids(search_results)
+    channel_ids = extract_channel_ids(search_results)
     video_info = fetch_video_info(video_ids)
     comments = fetch_comments(video_ids)
     captions = fetch_captions(video_ids)
+    
+    search_results >> [video_ids, channel_ids] >> [video_info, comments, captions]
 
 # Instantiating the DAG
 video_dag_instance = youtube_video_pipeline()
