@@ -3,5 +3,6 @@ secrets/
 .ipynb_checkpoints
 .DS_store
 .vscode
+data/
 
 __pycache__
