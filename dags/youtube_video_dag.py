@@ -133,7 +133,7 @@ def youtube_video_pipeline():
 
     # change the youtube comment function to get more results than just comments - as it has a lot other features to such as comment likes, comment replies
     # we have to search using commentthread id I guess for replies - no use comment.list() using the commentThreadID
-
+    # not necessarily a good idea for this BTW
 
     # DAG Flow
     search_results = search_youtube()

@@ -85,8 +85,6 @@ class LoadDataYT(CL.YouTubeDataAPI):
             logging.error(f"An error occurred while fetching search results: {e}", exc_info=True)
             return None
 
-
-
     def get_comments(self, params, max_comments=100):
         try:
             request = self.youtube_auth.commentThreads().list(**params)
@@ -109,6 +107,29 @@ class LoadDataYT(CL.YouTubeDataAPI):
         except Exception as e:
             logging.error(f"An error occurred while fetching comments: {e}", exc_info=True)
             return None
+        
+    def get_comment_list(self, params, max_comments=100):
+        try:
+            request = self.youtube_auth.comments().list(**params)
+            all_comments = []
+
+            while request and len(all_comments) < max_comments:
+                response = request.execute()
+                all_comments.extend(response.get("items", []))
+
+                if len(all_comments) >= max_comments:
+                    all_comments = all_comments[:max_comments]
+                    break
+
+                request = self.youtube_auth.comments().list_next(request, response)
+
+            logging.info(f"Total comments fetched: {len(all_comments)}")
+            return all_comments
+
+        except Exception as e:
+            logging.error(f"An error occurred while fetching comments: {e}", exc_info=True)
+            return None
+
 
     def get_captions(self, params):
         try:
