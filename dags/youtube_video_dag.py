@@ -67,10 +67,24 @@ def youtube_video_pipeline():
     def fetch_video_info(video_ids):
         """Fetches video details from YouTube API."""
         try:
-            params = {"part": "snippet,statistics", "id": ",".join(video_ids)}
-            logging.info(f"Fetching details for {len(video_ids)} videos.")
-            response = DataAPI.get_videos(params, max_videos=50    )
-            return response if response else []
+            BATCH_SIZE = 20
+            all_video_data = []
+
+            for i in range(0, len(video_ids), BATCH_SIZE):
+                batch = video_ids[i: i + BATCH_SIZE]
+                params = {
+                    "part": "snippet,statistics",
+                    "id": ",".join(batch)
+                }
+
+                logging.info(f"Fetching details for channels: {params['id']}")
+                response = DataAPI.get_channels(params)
+
+                if response and "items" in response:
+                    all_video_data.extend(response["items"])
+
+            logging.info(f"Successfully fetched details for {len(all_video_data)} channels.")
+            return all_video_data if all_video_data else []
         except Exception as e:
             logging.error(f"Error fetching video data: {e}", exc_info=True)
             return None

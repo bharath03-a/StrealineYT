@@ -53,7 +53,7 @@ def youtube_streams_etl_pipeline():
             'publishedAfter': '2018-01-01T00:00:00Z',
         }
 
-        search_results = DataAPI  .get_search_results(search_params, max_results=5)
+        search_results = DataAPI.get_search_results(search_params, max_results=5)
         results = TRANSFORM.transform_youtube_results(search_results)
         return results
 
@@ -78,7 +78,7 @@ def youtube_streams_etl_pipeline():
                 }
 
                 logging.info(f"Fetching details for channels: {params['id']}")
-                response = DataAPI  .get_channels(params)
+                response = DataAPI.get_channels(params)
 
                 if response and "items" in response:
                     all_channel_data.extend(response["items"])

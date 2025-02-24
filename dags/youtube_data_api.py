@@ -39,23 +39,10 @@ class LoadDataYT(CL.YouTubeDataAPI):
         # TODO: Change this fuction as it is not the correct implementation of the API retreival
         try:
             request = self.youtube_auth.videos().list(**params)
+            response = request.execute()
 
-            # setting up pagination and video collection
-            all_videos = []
-            while request and len(all_videos) < max_videos:
-                response = request.execute()
-
-                all_videos.extend(response.get("items", []))
-
-                if len(all_videos) >= max_videos:
-                    all_videos = all_videos[:max_videos]
-                    break
-
-                request = self.youtube_auth.videos().list_next(request, response)
-
-            logging.info(f"Total videos fetched: {len(all_videos)}")
-            return all_videos
-
+            logging.info(f"Successfully fetched the channel list")
+            return response
         except Exception as e:
             logging.error(f"An error occurred while fetching videos: {e}", exc_info=True)
             return None
