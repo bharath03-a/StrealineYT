@@ -6,3 +6,7 @@ secrets/
 data/
 
 __pycache__
+
+logs/
+config/
+plugins/

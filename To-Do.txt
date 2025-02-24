@@ -6,3 +6,16 @@
 - Setup Spark Streaming or Kafka Streaming
 - Then perform some Data transformations - understanding the data or some ML stuff?
 - NLP stuff can be done - like understanding the comments
+
+
+airflow:
+    docker-compose up airflow-init
+    docker-compose up -d
+    http://localhost:8080
+
+    docker-compose down -v
+docker-compose up --build
+
+
+
+installing the libraries are necessary or else we will have import DAG error
