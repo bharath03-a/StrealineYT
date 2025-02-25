@@ -97,7 +97,7 @@ def youtube_streams_etl_pipeline():
     fetch_channel_info(channel_ids)
 
 # Instantiating the DAG
-dag_instance = youtube_streams_etl_pipeline()
+dag = youtube_streams_etl_pipeline()
 
 # ----------------------- Testing Code -----------------------
 
