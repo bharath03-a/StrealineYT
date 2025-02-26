@@ -24,3 +24,7 @@ docker build . --tag extending_airflow:latest
 issue with pydantic validation LoL - setup .env correctly enoughz
 
 installing the libraries are necessary or else we will have import DAG error
+
+-- LEARN AIRFLOW
+-- KAFKA SETUP(confluent)
+-- APACHE HIVE(how)
