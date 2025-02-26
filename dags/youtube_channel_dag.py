@@ -29,7 +29,7 @@ def save_to_json(data, filename):
     dag_id="youtube_streams_pipeline",
     default_args=default_args,
     schedule_interval="@daily",
-    start_date=pendulum.now("UTC").format("YYYY-MM-DD HH:mm:ss"),
+    start_date=pendulum.now("UTC"),
     catchup=False,
     tags=["youtube", "ETL pipeline", "channels"]
 )
@@ -61,6 +61,7 @@ def youtube_streams_etl_pipeline():
     def extract_channel_ids(result):
         """Converts JSON-serializable data to Polars DataFrame and extracts channel IDs."""
         df = pl.DataFrame(result)
+        print(df.columns)
         return df["channelId"].to_list()
 
     @task()
