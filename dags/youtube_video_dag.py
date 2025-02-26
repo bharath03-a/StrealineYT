@@ -29,7 +29,7 @@ default_args = {
     dag_id="youtube_video_pipeline",
     default_args=default_args,
     schedule_interval="@daily",
-    start_date=pendulum.now("UTC").format("YYYY-MM-DD HH:mm:ss"),
+    start_date=pendulum.now("UTC"),
     catchup=False,
     tags=["youtube", "videos"],
 )
@@ -157,49 +157,6 @@ def youtube_video_pipeline():
     comments = fetch_comments(video_ids)
     captions = fetch_captions(video_ids)
 
-    search_results >> [video_ids, channel_ids] >> [video_info, comments, captions]
 
-
-# # Instantiating the DAG for Airflow
-# video_dag_instance = youtube_video_pipeline()
-
-# ----------------------- Testing Code -----------------------
-# if __name__ == "__main__":
-#     logging.basicConfig(level=logging.INFO)
-
-#     search_results = DataAPI.get_search_results(
-#         {
-#             "part": "snippet",
-#             "type": "video",
-#             "q": "machine learning|deep learning -statistics",
-#             "maxResults": 2,
-#             "order": "videoCount",
-#             "publishedAfter": "2018-01-01T00:00:00Z",
-#         },
-#         max_results=5,
-#     )
-#     transformed_search_results = TRANSFORM.transform_youtube_video_results(search_results)
-#     save_to_json(transformed_search_results, "../data/search_results.json")
-
-#     df = pl.DataFrame(transformed_search_results)
-#     video_ids = df["videoId"].to_list()
-#     channel_ids = df["channelId"].to_list()
-#     save_to_json(video_ids, "../data/video_ids.json")
-#     save_to_json(channel_ids, "../data/channel_ids.json")
-
-#     video_info = DataAPI.get_videos({"part": "snippet,statistics", "id": ",".join(video_ids)})
-#     save_to_json(video_info, "../data/video_info.json")
-
-#     all_comments = {
-#         video_id: DataAPI.get_comments({"part": "snippet", "videoId": video_id, "maxResults": 100}) or []
-#         for video_id in video_ids
-#     }
-#     save_to_json(all_comments, "../data/comments.json")
-
-#     all_captions = {
-#         video_id: DataAPI.get_captions({"part": "snippet", "videoId": video_id}) or []
-#         for video_id in video_ids
-#     }
-#     save_to_json(all_captions, "../data/captions.json")
-
-#     logging.info("Testing completed. JSON files saved in the 'data/' directory.")
+# Instantiating the DAG for Airflow
+video_dag_instance = youtube_video_pipeline()
