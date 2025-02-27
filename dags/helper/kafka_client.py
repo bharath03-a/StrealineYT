@@ -47,3 +47,40 @@ def create_consumer(consumer_name="yt_video_analytics_consumer"):
     consumer = Consumer(consumer_conf)
     print(f"Consumer '{consumer_name}' created.")
     return consumer
+
+def clean_kafka(topic_name, producer, consumer):
+    """Clean up Kafka by deleting the topic and closing producer/consumer."""
+    
+    try:
+        fs = admin_client.delete_topics([topic_name])
+        for topic, f in fs.items():
+            try:
+                f.result()
+                logging.info(f"Topic '{topic}' deleted successfully.")
+            except Exception as e:
+                logging.error(f"Failed to delete topic '{topic}': {e}")
+    except Exception as e:
+        logging.error(f"Error while deleting topic: {e}")
+
+    try:
+        producer.flush() 
+        logging.info("Kafka producer closed.")
+    except Exception as e:
+        logging.error(f"Error closing producer: {e}")
+    
+    try:
+        consumer.close()
+        logging.info("Kafka consumer closed.")
+    except Exception as e:
+        logging.error(f"Error closing consumer: {e}")
+    
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    topic_name = "yt_video_analytics_topic"
+    check_create_topic(topic_name)
+    
+    producer = create_producer("yt_video_analytics_test_producer")
+    consumer = create_consumer("yt_video_analytics_test_consumer")
+
+    clean_kafka(topic_name, producer, consumer)
