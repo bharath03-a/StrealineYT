@@ -6,6 +6,11 @@ import polars as pl
 import json
 from airflow.decorators import task, dag
 
+# Importing helper functions
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+from helper.kafka_client import check_create_topic, create_producer, create_consumer
+import helper.constants as CNST
+
 # Importing custom libraries
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from youtube_data_api import LoadDataYT
@@ -40,6 +45,16 @@ def youtube_streams_etl_pipeline():
 
     **Schedule:** Runs Daily (`@daily`)  
     """
+    @task()
+    def kafka_setup():
+        """Creates a Kafka topic and initializes a Kafka producer."""
+        check_create_topic(CNST.KAFKA_TOPIC_NAME)
+        producer_name = f"yt_channel_producer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
+        consumer_name = f"yt_channel_consumer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
+        
+        producer = create_producer(producer_name)
+        consumer = create_consumer(consumer_name)
+        return producer, consumer
 
     @task()
     def search_data_api():
