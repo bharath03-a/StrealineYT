@@ -27,4 +27,4 @@ installing the libraries are necessary or else we will have import DAG error
 
 -- LEARN AIRFLOW
 -- KAFKA SETUP(confluent)
--- APACHE HIVE(how)
+-- APACHE HIVE(how) - signed up for qubolt but not sure if I can get anything from them

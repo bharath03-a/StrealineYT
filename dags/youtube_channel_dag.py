@@ -108,10 +108,13 @@ def youtube_streams_etl_pipeline():
             return None
 
     # DAG Flow
-    producer, consumer = kafka_setup()
+    kafka_setup_result = kafka_setup()
     search_results = search_data_api()
     channel_ids = extract_channel_ids(search_results)
-    fetch_channel_info(channel_ids)
+    transformed_channel_data = fetch_channel_info(channel_ids)
+
+    # setting upstream dependencies
+    kafka_setup_result >> search_results >> channel_ids >> transformed_channel_data
 
 # Instantiating the DAG
 dag = youtube_streams_etl_pipeline()
