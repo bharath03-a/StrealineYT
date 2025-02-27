@@ -1,6 +1,5 @@
 import os
 import sys
-import pendulum
 import logging
 from confluent_kafka import Producer, Consumer
 from confluent_kafka.admin import AdminClient, NewTopic
@@ -9,78 +8,89 @@ from confluent_kafka.admin import AdminClient, NewTopic
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import constants as CNST
 
-# Initializing the Kafka AdminClient
-admin_client = AdminClient(CNST.KAFKA_CONF)
+class KafkaClientManager:
+    def __init__(self, kafka_conf):
+        """Initializes Kafka client manager with Kafka configuration."""
+        self.admin_client = AdminClient(kafka_conf)
+        self.producer = None
+        self.consumer = None
 
-def check_create_topic(topic_name):
-    """check if the topic exists and create it if it does not."""
-    topic_metadata = admin_client.list_topics()
-    if topic_name not in topic_metadata.topics:
-        logging.info(f"Topic '{topic_name}' does not exist. Creating...")
-        new_topic = NewTopic(topic_name, num_partitions=1, replication_factor=1)
-        fs = admin_client.create_topics([new_topic])
-        
-        for topic, f in fs.items():
-            try:
-                f.result()
-                logging.info(f"Topic '{topic}' created successfully.")
-            except Exception as e:
-                logging.info(f"Failed to create topic '{topic}': {e}")
-    else:
-        logging.info(f"Topic {topic_name} already exists.")
+    def check_create_topic(self, topic_name):
+        """Check if the topic exists and create it if it does not."""
+        print(f"Checking if topic '{topic_name}' exists...")
+        topic_metadata = self.admin_client.list_topics()
+        print(f"checked topics")
+        if topic_name not in topic_metadata.topics:
+            print(f"entered if")
+            logging.info(f"Topic '{topic_name}' does not exist. Creating...")
+            new_topic = NewTopic(topic_name, num_partitions=1, replication_factor=1)
+            fs = self.admin_client.create_topics([new_topic])
 
-def create_producer(producer_name="yt_video_analytics_producer"):
-    """Create a Kafka producer."""
-    producer_conf = CNST.KAFKA_CONF.copy()
-    producer_conf['client.id'] = producer_name
-    producer = Producer(producer_conf)
-    print(f"Producer '{producer_name}' created.")
-    return producer
+            for topic, f in fs.items():
+                print(f"entered for")
+                try:
+                    f.result()
+                    print(f"creation done")
+                    logging.info(f"Topic '{topic}' created successfully.")
+                except Exception as e:
+                    logging.error(f"Failed to create topic '{topic}': {e}")
+        else:
+            logging.info(f"Topic '{topic_name}' already exists.")
 
-def create_consumer(consumer_name="yt_video_analytics_consumer"):
-    """Create a Kafka consumer."""
-    consumer_conf = {
-        'bootstrap.servers': 'localhost:9092',
-        'group.id': consumer_name,
-        'auto.offset.reset': 'earliest'
-    }
-    consumer = Consumer(consumer_conf)
-    print(f"Consumer '{consumer_name}' created.")
-    return consumer
+    def create_producer(self, producer_name="yt_video_analytics_producer"):
+        """Create a Kafka producer."""
+        producer_conf = CNST.KAFKA_CONF.copy()
+        producer_conf['client.id'] = producer_name
+        self.producer = Producer(producer_conf)
+        print(f"Producer '{producer_name}' created.")
+        return self.producer
 
-def clean_kafka(topic_name, producer, consumer):
-    """Clean up Kafka by deleting the topic and closing producer/consumer."""
-    
-    try:
-        fs = admin_client.delete_topics([topic_name])
-        for topic, f in fs.items():
-            try:
-                f.result()
-                logging.info(f"Topic '{topic}' deleted successfully.")
-            except Exception as e:
-                logging.error(f"Failed to delete topic '{topic}': {e}")
-    except Exception as e:
-        logging.error(f"Error while deleting topic: {e}")
+    def create_consumer(self, consumer_name="yt_video_analytics_consumer"):
+        """Create a Kafka consumer."""
+        consumer_conf = {
+            'bootstrap.servers': 'localhost:9092',
+            'group.id': consumer_name,
+            'auto.offset.reset': 'earliest'
+        }
+        self.consumer = Consumer(consumer_conf)
+        print(f"Consumer '{consumer_name}' created.")
+        return self.consumer
 
-    try:
-        producer.flush() 
-        logging.info("Kafka producer closed.")
-    except Exception as e:
-        logging.error(f"Error closing producer: {e}")
-    
-    try:
-        consumer.close()
-        logging.info("Kafka consumer closed.")
-    except Exception as e:
-        logging.error(f"Error closing consumer: {e}")
-    
+    def clean_kafka(self, topic_name):
+        """Clean up Kafka by deleting the topic and closing producer/consumer."""
+        try:
+            fs = self.admin_client.delete_topics([topic_name])
+            for topic, f in fs.items():
+                try:
+                    f.result()
+                    logging.info(f"Topic '{topic}' deleted successfully.")
+                except Exception as e:
+                    logging.error(f"Failed to delete topic '{topic}': {e}")
+        except Exception as e:
+            logging.error(f"Error while deleting topic: {e}")
+
+        try:
+            if self.producer:
+                self.producer.flush() 
+                logging.info("Kafka producer closed.")
+        except Exception as e:
+            logging.error(f"Error closing producer: {e}")
+
+        try:
+            if self.consumer:
+                self.consumer.close()
+                logging.info("Kafka consumer closed.")
+        except Exception as e:
+            logging.error(f"Error closing consumer: {e}")
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-
-    topic_name = "yt_video_analytics_topic"
-    check_create_topic(topic_name)
+    kafka_manager = KafkaClientManager(CNST.KAFKA_CONF)
     
-    producer = create_producer("yt_video_analytics_test_producer")
-    consumer = create_consumer("yt_video_analytics_test_consumer")
+    topic_name = "yt_video_analytics_topic"
+    kafka_manager.check_create_topic(topic_name)
 
-    clean_kafka(topic_name, producer, consumer)
+    producer = kafka_manager.create_producer("yt_video_analytics_test_producer")
+    consumer = kafka_manager.create_consumer("yt_video_analytics_test_consumer")
+
+    kafka_manager.clean_kafka(topic_name)

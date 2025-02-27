@@ -48,6 +48,7 @@ def youtube_streams_etl_pipeline():
     @task()
     def kafka_setup():
         """Creates a Kafka topic and initializes a Kafka producer."""
+        print("Setting up Kafka...")
         check_create_topic(CNST.KAFKA_TOPIC_NAME)
         producer_name = f"yt_channel_producer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
         consumer_name = f"yt_channel_consumer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
