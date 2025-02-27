@@ -6,11 +6,6 @@ import polars as pl
 import json
 from airflow.decorators import task, dag
 
-# Importing helper functions
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-from helper.kafka_client import KafkaClientManager
-import helper.constants as CNST
-
 # Importing custom libraries
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from youtube_data_api import LoadDataYT
@@ -45,18 +40,6 @@ def youtube_streams_etl_pipeline():
 
     **Schedule:** Runs Daily (`@daily`)  
     """
-    @task()
-    def kafka_setup():
-        """Creates a Kafka topic and initializes a Kafka producer."""
-        kafka_client = KafkaClientManager(CNST.KAFKA_CONF)
-        print("Setting up Kafka...")
-        kafka_client.check_create_topic(CNST.KAFKA_TOPIC_NAME)
-        producer_name = f"yt_channel_producer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
-        consumer_name = f"yt_channel_consumer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
-        
-        kafka_client.create_producer(producer_name)
-        kafka_client.create_consumer(consumer_name)
-        return True
 
     @task()
     def search_data_api():
@@ -110,13 +93,9 @@ def youtube_streams_etl_pipeline():
             return None
 
     # DAG Flow
-    kafka_setup_result = kafka_setup()
     search_results = search_data_api()
     channel_ids = extract_channel_ids(search_results)
     transformed_channel_data = fetch_channel_info(channel_ids)
-
-    # setting upstream dependencies
-    kafka_setup_result >> search_results >> channel_ids >> transformed_channel_data
 
 # Instantiating the DAG
 dag = youtube_streams_etl_pipeline()
