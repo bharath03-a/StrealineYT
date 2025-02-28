@@ -28,3 +28,10 @@ installing the libraries are necessary or else we will have import DAG error
 -- LEARN AIRFLOW
 -- KAFKA SETUP(confluent)
 -- APACHE HIVE(how) - signed up for qubolt but not sure if I can get anything from them
+
+Issue - might be Airflow Worker Environment Configuration
+
+bootstrap_servers='kafka-server:9092'  # Change 'kafka-server' to the appropriate hostname/IP
+
+
+python ./dags/helper/kafka_client.py

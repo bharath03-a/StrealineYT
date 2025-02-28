@@ -17,23 +17,20 @@ class KafkaClientManager:
 
     def check_create_topic(self, topic_name):
         """Check if the topic exists and create it if it does not."""
-        # print(f"Checking if topic '{topic_name}' exists...")
-        # topic_metadata = self.admin_client.list_topics().topics
-        print(f"entered check_create_topic")
-        logging.info(f"Topic '{topic_name}' does not exist. Creating...")
-        new_topic = NewTopic(topic_name, num_partitions=1, replication_factor=1)
-        fs = self.admin_client.create_topics([new_topic])
+        topic_metadata = self.admin_client.list_topics().topics
 
-        for topic, f in fs.items():
-            print(f"entered for")
-            try:
-                f.result()
-                print(f"creation done")
-                logging.info(f"Topic '{topic}' created successfully.")
-            except Exception as e:
-                logging.error(f"Failed to create topic '{topic}': {e}")
-        # else:
-        #     logging.info(f"Topic '{topic_name}' already exists.")
+        if topic_name not in topic_metadata:
+            logging.info(f"Topic '{topic_name}' does not exist. Creating...")
+            new_topic = NewTopic(topic_name, num_partitions=1, replication_factor=1)
+            fs = self.admin_client.create_topics([new_topic])
+            for topic, f in fs.items():
+                try:
+                    f.result()
+                    logging.info(f"Topic '{topic}' created successfully.")
+                except Exception as e:
+                    logging.error(f"Failed to create topic '{topic}': {e}")
+        else:
+            logging.info(f"Topic '{topic_name}' already exists.")
 
     def create_producer(self, producer_name="yt_video_analytics_producer"):
         """Create a Kafka producer."""
@@ -91,4 +88,4 @@ if __name__ == "__main__":
     producer = kafka_manager.create_producer("yt_video_analytics_test_producer")
     consumer = kafka_manager.create_consumer("yt_video_analytics_test_consumer")
 
-    kafka_manager.clean_kafka(topic_name)
+    # kafka_manager.clean_kafka(topic_name)
