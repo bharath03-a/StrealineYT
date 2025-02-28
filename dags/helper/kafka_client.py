@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import time
 from confluent_kafka import Producer, Consumer
 from confluent_kafka.admin import AdminClient, NewTopic
 
@@ -85,7 +86,39 @@ if __name__ == "__main__":
     topic_name = "yt_video_analytics_topic"
     kafka_manager.check_create_topic(topic_name)
 
-    # producer = kafka_manager.create_producer("yt_video_analytics_test_producer")
+    producer = kafka_manager.create_producer("yt_video_analytics_test_producer")
     consumer = kafka_manager.create_consumer("yt_video_analytics_test_consumer")
 
-    # kafka_manager.clean_kafka(topic_name)
+    # consumer.subscribe([topic_name])
+
+    # # Send a test message
+    # test_message = "Hello Kafka! This is a test message."
+    
+    # def delivery_report(err, msg):
+    #     """Callback for message delivery confirmation."""
+    #     if err is not None:
+    #         logging.error(f"Message delivery failed: {err}")
+    #     else:
+    #         logging.info(f"Message delivered to {msg.topic()} [{msg.partition()}]")
+
+    # logging.info(f"Sending message: {test_message}")
+    # producer.produce(topic_name, key="test_key", value=test_message, callback=delivery_report)
+    # producer.flush()  # Ensure message is sent
+
+    # # Give Kafka a moment to process
+    # time.sleep(2)
+
+    # # Consume message
+    # logging.info("Reading message from Kafka...")
+    # msg = consumer.poll(timeout=5.0)
+
+    # if msg is None:
+    #     logging.error("No message received!")
+    # elif msg.error():
+    #     logging.error(f"Consumer error: {msg.error()}")
+    # else:
+    #     logging.info(f"Received message: {msg.value().decode('utf-8')}")
+
+    # # Cleanup
+    # consumer.close()
+    # logging.info("Consumer closed.")

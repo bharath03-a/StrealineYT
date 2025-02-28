@@ -104,7 +104,7 @@ def youtube_streams_etl_pipeline():
     @task()
     def publish_to_kafka(data):
         """Publishes transformed channel data to a Confluent Kafka topic."""
-        kafka_client = KafkaClientManager(CNST.KAFKA_CONF)
+        kafka_client = KafkaClientManager(CNST.KAFKA_AF_CONF)
         producer = kafka_client.create_producer("yt_analytics_producer")
 
         topic = "yt_video_analytics_topic"
