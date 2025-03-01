@@ -86,7 +86,7 @@ if __name__ == "__main__":
     topic_name = "yt_video_analytics_topic"
     kafka_manager.check_create_topic(topic_name)
 
-    producer = kafka_manager.create_producer("yt_video_analytics_test_producer")
+    # producer = kafka_manager.create_producer("yt_video_analytics_test_producer")
     consumer = kafka_manager.create_consumer("yt_video_analytics_test_consumer")
 
     # consumer.subscribe([topic_name])

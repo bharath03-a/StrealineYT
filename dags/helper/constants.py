@@ -11,8 +11,4 @@ KAFKA_CONF = {
     'bootstrap.servers': 'localhost:9092',
 }
 
-KAFKA_AF_CONF = {
-    'bootstrap.servers': 'broker:29092',
-}
-
 KAFKA_TOPIC_NAME = 'yt_video_analytics'
