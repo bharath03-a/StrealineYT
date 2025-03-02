@@ -8,7 +8,7 @@ SERVICE_ACCOUNT_FILE = "../secrets/youtube_api_secret.json"
 
 # Kafka setup constants
 KAFKA_CONF = {
-    'bootstrap.servers': 'localhost:9092',
+    'bootstrap.servers': 'broker:29092',
 }
 
 KAFKA_TOPIC_NAME = 'yt_video_analytics'

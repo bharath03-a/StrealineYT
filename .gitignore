@@ -24,3 +24,6 @@ config/
 plugins/
 .astro/
 backup/
+
+airflow.yaml
+kafka.yaml

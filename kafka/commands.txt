@@ -1,9 +1,0 @@
-docker compose up -d
-docker compose ps
-docker-compose restart <image-name>
-
-http://localhost:9021
-
-docker-compose stop
-
-docker system prune -a --volumes --filter "label=io.confluent.docker"
