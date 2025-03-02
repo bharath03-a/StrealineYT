@@ -39,3 +39,9 @@ python ./dags/helper/kafka_client.py
 
 - Create a single docker compose file for kafka, airflow - no astro
 - 
+
+
+- Things to figure out about env variables
+- Hive setup
+- Finalize the whole workflow until Kafka for now
+- Use Apache Flink
