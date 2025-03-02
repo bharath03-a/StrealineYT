@@ -35,3 +35,7 @@ bootstrap_servers='kafka-server:9092'  # Change 'kafka-server' to the appropriat
 
 
 python ./dags/helper/kafka_client.py
+
+
+- Create a single docker compose file for kafka, airflow - no astro
+- 
