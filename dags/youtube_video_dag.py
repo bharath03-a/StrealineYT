@@ -10,6 +10,8 @@ from airflow.decorators import dag, task
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from youtube_data_api import LoadDataYT
 import youtube_transform as TRANSFORM
+from helper.kafka_client import KafkaClientManager
+import helper.constants as CNST
 
 DataAPI = LoadDataYT()
 
@@ -34,6 +36,12 @@ default_args = {
     tags=["youtube", "videos"],
 )
 def youtube_video_pipeline():
+    @task()
+    def kafka_setup():
+        """Creates a Kafka topic and initializes a Kafka producer."""
+        kafka_client = KafkaClientManager(CNST.KAFKA_CONF)
+        kafka_client.check_create_topic(CNST.KAFKA_TOPIC_NAME)
+        return True
 
     @task()
     def search_youtube():
@@ -77,8 +85,8 @@ def youtube_video_pipeline():
                     "id": ",".join(batch)
                 }
 
-                logging.info(f"Fetching details for channels: {params['id']}")
-                response = DataAPI.get_channels(params)
+                logging.info(f"Fetching details for videos: {params['id']}")
+                response = DataAPI.get_videos(params)
 
                 if response and "items" in response:
                     all_video_data.extend(response["items"])
@@ -118,7 +126,39 @@ def youtube_video_pipeline():
         except Exception as e:
             logging.error(f"Error fetching captions: {e}", exc_info=True)
             return None
+    
+    @task()
+    def publish_to_kafka(data):
+        """Publishes transformed channel data to a Confluent Kafka topic."""
+        kafka_client = KafkaClientManager(CNST.KAFKA_CONF)
+        producer_name = f"yt_video_producer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
+
+        producer = kafka_client.create_producer(producer_name)
+
         
+        for key, record in enumerate(data):
+            print(record)
+            producer.produce(CNST.KAFKA_TOPIC_NAME, key=str(key).encode('utf-8'), value=json.dumps(record))
+            producer.poll(0)
+        print(f"Published {len(data)} records to Kafka topic: {CNST.KAFKA_TOPIC_NAME}")
+        
+        producer.flush()
+        logging.info(f"Published {len(data)} records to Kafka topic: {CNST.KAFKA_TOPIC_NAME}")
+        
+    # DAG Flow
+    search_results = search_youtube()
+    video_ids = extract_video_ids(search_results)
+    channel_ids = extract_channel_ids(search_results)
+    video_info = fetch_video_info(video_ids)
+    comments = fetch_comments(video_ids)
+    captions = fetch_captions(video_ids)
+    
+    kafka_setup() >> publish_to_kafka(video_info)
+
+
+# Instantiating the DAG for Airflow
+video_dag_instance = youtube_video_pipeline()
+
     # can also get top or most popular videos in a certain search category
     # see if we can input data to DAG so we can input params
     # @task()
@@ -148,15 +188,3 @@ def youtube_video_pipeline():
     # change the youtube comment function to get more results than just comments - as it has a lot other features to such as comment likes, comment replies
     # we have to search using commentthread id I guess for replies - no use comment.list() using the commentThreadID
     # not necessarily a good idea for this BTW
-
-    # DAG Flow
-    search_results = search_youtube()
-    video_ids = extract_video_ids(search_results)
-    channel_ids = extract_channel_ids(search_results)
-    video_info = fetch_video_info(video_ids)
-    comments = fetch_comments(video_ids)
-    captions = fetch_captions(video_ids)
-
-
-# Instantiating the DAG for Airflow
-video_dag_instance = youtube_video_pipeline()
