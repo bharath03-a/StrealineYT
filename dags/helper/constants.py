@@ -11,6 +11,9 @@ KAFKA_CONF = {
     'bootstrap.servers': 'broker:29092',
 }
 
-KAFKA_TOPIC_NAME = 'yt_video_analytics'
+KAFKA_TOPIC_CHANNEL = "youtube_channel_info"
+KAFKA_TOPIC_VIDEO = "youtube_video_info"
+KAFKA_TOPIC_COMMENTS = "youtube_video_comments"
+KAFKA_TOPIC_CAPTIONS = "youtube_video_captions"
 
 YT_VIDEO_QUERY = "machine learning|deep learning -statistics"

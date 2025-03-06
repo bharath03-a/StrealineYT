@@ -40,7 +40,15 @@ def youtube_video_pipeline():
     def kafka_setup():
         """Creates a Kafka topic and initializes a Kafka producer."""
         kafka_client = KafkaClientManager(CNST.KAFKA_CONF)
-        kafka_client.check_create_topic(CNST.KAFKA_TOPIC_NAME)
+        topics = [
+            CNST.KAFKA_TOPIC_VIDEO,
+            CNST.KAFKA_TOPIC_CHANNEL,
+            CNST.KAFKA_TOPIC_COMMENTS,
+            CNST.KAFKA_TOPIC_CAPTIONS
+        ]
+
+        for topic in topics:
+            kafka_client.check_create_topic(topic)
         return True
 
     @task()
@@ -170,33 +178,49 @@ def youtube_video_pipeline():
             return None
     
     @task()
-    def publish_to_kafka(data):
-        """Publishes transformed channel data to a Confluent Kafka topic."""
+    def publish_to_kafka(data, topic_name):
+        """Publishes transformed data to a specified Kafka topic."""
         kafka_client = KafkaClientManager(CNST.KAFKA_CONF)
-        producer_name = f"yt_video_producer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
+        producer_name = f"yt_{topic_name}_producer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
 
         producer = kafka_client.create_producer(producer_name)
 
-        
         for key, record in enumerate(data):
-            print(record)
-            producer.produce(CNST.KAFKA_TOPIC_NAME, key=str(key).encode('utf-8'), value=json.dumps(record))
+            producer.produce(topic_name, key=str(key).encode('utf-8'), value=json.dumps(record))
             producer.poll(0)
-        print(f"Published {len(data)} records to Kafka topic: {CNST.KAFKA_TOPIC_NAME}")
         
         producer.flush()
-        logging.info(f"Published {len(data)} records to Kafka topic: {CNST.KAFKA_TOPIC_NAME}")
+        logging.info(f"Published {len(data)} records to Kafka topic: {topic_name}")
+
         
     # DAG Flow
+    kafka_setup_task = kafka_setup()
+
+    # Fetch Data
     search_results = search_youtube()
     video_ids = extract_video_ids(search_results)
     channel_ids = extract_channel_ids(search_results)
+
+    # Fetching additional information
     transformed_channel_data = fetch_channel_info(channel_ids)
     video_info = fetch_video_info(video_ids)
     comments = fetch_comments(video_ids)
     captions = fetch_captions(video_ids)
-    
-    kafka_setup() >> publish_to_kafka(video_info)
+
+    # Publishing data to respective Kafka topics
+    publish_channel_info = publish_to_kafka(transformed_channel_data, CNST.KAFKA_TOPIC_CHANNEL)
+    publish_video_info = publish_to_kafka(video_info, CNST.KAFKA_TOPIC_VIDEO)
+    publish_video_comments = publish_to_kafka(comments, CNST.KAFKA_TOPIC_COMMENTS)
+    publish_video_captions = publish_to_kafka(captions, CNST.KAFKA_TOPIC_CAPTIONS)
+
+    # Define dependencies
+    kafka_setup_task >> [
+        publish_channel_info,
+        publish_video_info,
+        publish_video_comments,
+        publish_video_captions
+    ]
+
 
 
 # Instantiating the DAG for Airflow
