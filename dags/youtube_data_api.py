@@ -41,7 +41,7 @@ class LoadDataYT(CL.YouTubeDataAPI):
             request = self.youtube_auth.videos().list(**params)
             response = request.execute()
 
-            logging.info(f"Successfully fetched the channel list")
+            logging.info(f"Successfully fetched the video list")
             return response
         except Exception as e:
             logging.error(f"An error occurred while fetching videos: {e}", exc_info=True)
@@ -74,44 +74,44 @@ class LoadDataYT(CL.YouTubeDataAPI):
 
     def get_comments(self, params, max_comments=100):
         try:
-            request = self.youtube_auth.commentThreads().list(**params)
+            # Set a reasonable page size (YouTube API allows 1-100)
+            page_size = min(100, max_comments)
+            params['maxResults'] = page_size
+            
             all_comments = []
-
-            while request and len(all_comments) < max_comments:
-                response = request.execute()
-                all_comments.extend(response.get("items", []))
-
-                if len(all_comments) >= max_comments:
-                    all_comments = all_comments[:max_comments]
+            next_page_token = None
+            
+            while len(all_comments) < max_comments:
+                if next_page_token:
+                    params['pageToken'] = next_page_token
+                
+                response = self.youtube_auth.commentThreads().list(**params).execute()
+                items = response.get('items', [])
+                
+                all_comments.extend(items)
+                
+                next_page_token = response.get('nextPageToken')
+                
+                if not next_page_token or len(all_comments) >= max_comments:
                     break
-
-                request = self.youtube_auth.commentThreads().list_next(request, response)
-
-            logging.info(f"Total comments fetched: {len(all_comments)}")
+            
+            if len(all_comments) > max_comments:
+                all_comments = all_comments[:max_comments]
+                
+            logging.info(f"Total comment threads fetched: {len(all_comments)}")
             return all_comments
-
+        
         except Exception as e:
-            logging.error(f"An error occurred while fetching comments: {e}", exc_info=True)
+            logging.error(f"An error occurred while fetching comment threads: {e}", exc_info=True)
             return None
         
-    def get_comment_list(self, params, max_comments=100):
+    def get_comment_list(self, params):
         try:
             request = self.youtube_auth.comments().list(**params)
-            all_comments = []
-
-            while request and len(all_comments) < max_comments:
-                response = request.execute()
-                all_comments.extend(response.get("items", []))
-
-                if len(all_comments) >= max_comments:
-                    all_comments = all_comments[:max_comments]
-                    break
-
-                request = self.youtube_auth.comments().list_next(request, response)
-
-            logging.info(f"Total comments fetched: {len(all_comments)}")
-            return all_comments
-
+            response = request.execute()
+            logging.info(f"Successfully fetched the comment list")
+            
+            return response
         except Exception as e:
             logging.error(f"An error occurred while fetching comments: {e}", exc_info=True)
             return None
@@ -121,20 +121,14 @@ class LoadDataYT(CL.YouTubeDataAPI):
         """Fetches captions with pagination, similar to get_comment_list."""
         try:
             request = self.youtube_auth.captions().list(**params)
-            all_captions = []
+            response = request.execute()
 
-            while request and len(all_captions) < max_captions:
-                response = request.execute()
-                all_captions.extend(response.get("items", []))
+            captions = []
+            for item in response.get("items", []):
+                captions.append(item)
 
-                if len(all_captions) >= max_captions:
-                    all_captions = all_captions[:max_captions]
-                    break
-
-                request = self.youtube_auth.captions().list_next(request, response)
-
-            logging.info(f"Total captions fetched: {len(all_captions)}")
-            return all_captions
+            logging.info(f"Total captions fetched: {len(captions)}")
+            return captions
 
         except Exception as e:
             logging.error(f"An error occurred while fetching captions: {e}", exc_info=True)

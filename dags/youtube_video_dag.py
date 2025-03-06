@@ -15,12 +15,6 @@ import helper.constants as CNST
 
 DataAPI = LoadDataYT()
 
-# Save data to JSON utility
-def save_to_json(data, filename):
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
-    with open(filename, "w") as f:
-        json.dump(data, f, indent=4)
-
 default_args = {
     "owner": "Bharath",
     "depends_on_past": False,
@@ -135,20 +129,19 @@ def youtube_video_pipeline():
 
     @task()
     def fetch_comments(video_ids):
-        """Fetches comments for each video in batches."""
+        """Fetches comments for each video individually."""
         try:
-            BATCH_SIZE = 20
             all_comments = {}
             
-            for i in range(0, len(video_ids), BATCH_SIZE):
-                batch = video_ids[i: i + BATCH_SIZE]
-                params = {"part": "snippet", "videoId": ",".join(batch)}
-                logging.info(f"Fetching comments for videos: {params['id']}")
-                response = DataAPI.get_comments(params, max_comments=5)
+            for video_id in video_ids:
+                params = {"part": "snippet", "videoId": video_id}
+                logging.info(f"Fetching comments for video: {video_id}")
+                response = DataAPI.get_comment_threads(params, max_comments=5)
                 
-                if response:
-                    for idx, video_id in enumerate(batch):
-                        all_comments[video_id] = response[idx] if idx < len(response) else []
+                if response is not None:
+                    all_comments[video_id] = response
+                else:
+                    all_comments[video_id] = []
             
             return all_comments
         except Exception as e:
@@ -157,20 +150,19 @@ def youtube_video_pipeline():
 
     @task()
     def fetch_captions(video_ids):
-        """Fetches captions for each video in batches."""
+        """Fetches captions for each video individually."""
         try:
-            BATCH_SIZE = 20
             all_captions = {}
             
-            for i in range(0, len(video_ids), BATCH_SIZE):
-                batch = video_ids[i: i + BATCH_SIZE]
-                params = {"part": "snippet", "videoId": ",".join(batch)}
-                logging.info(f"Fetching captions for videos: {params['id']}")
+            for video_id in video_ids:
+                params = {"part": "snippet", "videoId": video_id}
+                logging.info(f"Fetching captions for video: {video_id}")
                 response = DataAPI.get_captions(params, max_captions=5)
                 
-                if response:
-                    for idx, video_id in enumerate(batch):
-                        all_captions[video_id] = response[idx] if idx < len(response) else []
+                if response is not None:
+                    all_captions[video_id] = response
+                else:
+                    all_captions[video_id] = []
             
             return all_captions
         except Exception as e:
