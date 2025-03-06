@@ -127,14 +127,21 @@ def youtube_video_pipeline():
 
     @task()
     def fetch_comments(video_ids):
-        """Fetches comments for each video."""
+        """Fetches comments for each video in batches."""
         try:
+            BATCH_SIZE = 20
             all_comments = {}
-            for video_id in video_ids:
-                params = {"part": "snippet", "videoId": video_id, "maxResults": 10}
-                logging.info(f"Fetching comments for video: {video_id}")
-                comments = DataAPI.get_comments(params, max_comments=20)
-                all_comments[video_id] = comments if comments else []
+            
+            for i in range(0, len(video_ids), BATCH_SIZE):
+                batch = video_ids[i: i + BATCH_SIZE]
+                params = {"part": "snippet", "id": ",".join(batch), "maxResults": 10}
+                logging.info(f"Fetching comments for videos: {params['id']}")
+                response = DataAPI.get_comments(params, max_comments=20)
+                
+                if response:
+                    for idx, video_id in enumerate(batch):
+                        all_comments[video_id] = response[idx] if idx < len(response) else []
+            
             return all_comments
         except Exception as e:
             logging.error(f"Error fetching comments: {e}", exc_info=True)
@@ -142,14 +149,21 @@ def youtube_video_pipeline():
 
     @task()
     def fetch_captions(video_ids):
-        """Fetches captions for each video."""
+        """Fetches captions for each video in batches."""
         try:
+            BATCH_SIZE = 20
             all_captions = {}
-            for video_id in video_ids:
-                params = {"part": "snippet", "videoId": video_id}
-                logging.info(f"Fetching captions for video: {video_id}")
-                captions = DataAPI.get_captions(params)
-                all_captions[video_id] = captions if captions else []
+            
+            for i in range(0, len(video_ids), BATCH_SIZE):
+                batch = video_ids[i: i + BATCH_SIZE]
+                params = {"part": "snippet", "id": ",".join(batch)}
+                logging.info(f"Fetching captions for videos: {params['id']}")
+                response = DataAPI.get_captions(params)
+                
+                if response:
+                    for idx, video_id in enumerate(batch):
+                        all_captions[video_id] = response[idx] if idx < len(response) else []
+            
             return all_captions
         except Exception as e:
             logging.error(f"Error fetching captions: {e}", exc_info=True)
