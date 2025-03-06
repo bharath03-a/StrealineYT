@@ -73,8 +73,8 @@ class LoadDataYT(CL.YouTubeDataAPI):
             return None
 
     def get_comments(self, params, max_comments=100):
+        """"""
         try:
-            # Set a reasonable page size (YouTube API allows 1-100)
             page_size = min(100, max_comments)
             params['maxResults'] = page_size
             
@@ -100,24 +100,11 @@ class LoadDataYT(CL.YouTubeDataAPI):
                 
             logging.info(f"Total comment threads fetched: {len(all_comments)}")
             return all_comments
-        
         except Exception as e:
             logging.error(f"An error occurred while fetching comment threads: {e}", exc_info=True)
             return None
-        
-    def get_comment_list(self, params):
-        try:
-            request = self.youtube_auth.comments().list(**params)
-            response = request.execute()
-            logging.info(f"Successfully fetched the comment list")
-            
-            return response
-        except Exception as e:
-            logging.error(f"An error occurred while fetching comments: {e}", exc_info=True)
-            return None
 
-
-    def get_captions(self, params, max_captions=100):
+    def get_captions(self, params):
         """Fetches captions with pagination, similar to get_comment_list."""
         try:
             request = self.youtube_auth.captions().list(**params)

@@ -136,7 +136,7 @@ def youtube_video_pipeline():
             for video_id in video_ids:
                 params = {"part": "snippet", "videoId": video_id}
                 logging.info(f"Fetching comments for video: {video_id}")
-                response = DataAPI.get_comment_threads(params, max_comments=5)
+                response = DataAPI.get_comments(params, max_comments=5)
                 
                 if response is not None:
                     all_comments[video_id] = response
@@ -157,7 +157,7 @@ def youtube_video_pipeline():
             for video_id in video_ids:
                 params = {"part": "snippet", "videoId": video_id}
                 logging.info(f"Fetching captions for video: {video_id}")
-                response = DataAPI.get_captions(params, max_captions=5)
+                response = DataAPI.get_captions(params)
                 
                 if response is not None:
                     all_captions[video_id] = response
@@ -212,8 +212,6 @@ def youtube_video_pipeline():
         publish_video_comments,
         publish_video_captions
     ]
-
-
 
 # Instantiating the DAG for Airflow
 video_dag_instance = youtube_video_pipeline()
