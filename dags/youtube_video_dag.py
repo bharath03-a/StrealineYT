@@ -131,7 +131,7 @@ def youtube_video_pipeline():
     def fetch_comments(video_ids):
         """Fetches comments for each video individually."""
         try:
-            all_comments = {}
+            all_comments = []
             
             for video_id in video_ids:
                 params = {"part": "snippet", "videoId": video_id}
@@ -139,10 +139,10 @@ def youtube_video_pipeline():
                 response = DataAPI.get_comments(params, max_comments=5)
                 
                 if response is not None:
-                    all_comments[video_id] = response
+                    all_comments.extend(response)
                 else:
-                    all_comments[video_id] = []
-            
+                    all_comments.extend([])
+
             return all_comments
         except Exception as e:
             logging.error(f"Error fetching comments: {e}", exc_info=True)
@@ -152,7 +152,7 @@ def youtube_video_pipeline():
     def fetch_captions(video_ids):
         """Fetches captions for each video individually."""
         try:
-            all_captions = {}
+            all_captions = []
             
             for video_id in video_ids:
                 params = {"part": "snippet", "videoId": video_id}
@@ -160,9 +160,9 @@ def youtube_video_pipeline():
                 response = DataAPI.get_captions(params)
                 
                 if response is not None:
-                    all_captions[video_id] = response
+                    all_captions.extend(response)
                 else:
-                    all_captions[video_id] = []
+                    all_captions.extend([])
             
             return all_captions
         except Exception as e:
@@ -170,19 +170,64 @@ def youtube_video_pipeline():
             return None
     
     @task()
-    def publish_to_kafka(data, topic_name):
-        """Publishes transformed data to a specified Kafka topic."""
+    def publish_videos_to_kafka(data):
+        """Publishes transformed video data to Kafka topic."""
         kafka_client = KafkaClientManager(CNST.KAFKA_CONF)
-        producer_name = f"yt_{topic_name}_producer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
-
+        producer_name = f"yt_video_producer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
         producer = kafka_client.create_producer(producer_name)
 
         for key, record in enumerate(data):
-            producer.produce(topic_name, key=str(key).encode('utf-8'), value=json.dumps(record))
+            print(record)
+            producer.produce(CNST.KAFKA_TOPIC_VIDEO, key=str(key).encode('utf-8'), value=json.dumps(record))
             producer.poll(0)
         
         producer.flush()
-        logging.info(f"Published {len(data)} records to Kafka topic: {topic_name}")
+        logging.info(f"Published {len(data)} video records to Kafka topic: {CNST.KAFKA_TOPIC_VIDEO}")
+
+    @task()
+    def publish_channels_to_kafka(data):
+        """Publishes transformed channel data to Kafka topic."""
+        kafka_client = KafkaClientManager(CNST.KAFKA_CONF)
+        producer_name = f"yt_channel_producer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
+        producer = kafka_client.create_producer(producer_name)
+
+        for key, record in enumerate(data):
+            print(record)
+            producer.produce(CNST.KAFKA_TOPIC_CHANNEL, key=str(key).encode('utf-8'), value=json.dumps(record))
+            producer.poll(0)
+        
+        producer.flush()
+        logging.info(f"Published {len(data)} channel records to Kafka topic: {CNST.KAFKA_TOPIC_CHANNEL}")
+
+    @task()
+    def publish_comments_to_kafka(data):
+        """Publishes comment data to Kafka topic."""
+        kafka_client = KafkaClientManager(CNST.KAFKA_CONF)
+        producer_name = f"yt_comments_producer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
+        producer = kafka_client.create_producer(producer_name)
+
+        for key, record in enumerate(data):
+            print(record)
+            producer.produce(CNST.KAFKA_TOPIC_COMMENTS, key=str(key).encode('utf-8'), value=json.dumps(record))
+            producer.poll(0)
+        
+        producer.flush()
+        logging.info(f"Published {len(data)} comment records to Kafka topic: {CNST.KAFKA_TOPIC_COMMENTS}")
+
+    @task()
+    def publish_captions_to_kafka(data):
+        """Publishes caption data to Kafka topic."""
+        kafka_client = KafkaClientManager(CNST.KAFKA_CONF)
+        producer_name = f"yt_captions_producer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
+        producer = kafka_client.create_producer(producer_name)
+
+        for key, record in enumerate(data):
+            print(record)
+            producer.produce(CNST.KAFKA_TOPIC_CAPTIONS, key=str(key).encode('utf-8'), value=json.dumps(record))
+            producer.poll(0)
+        
+        producer.flush()
+        logging.info(f"Published {len(data)} caption records to Kafka topic: {CNST.KAFKA_TOPIC_CAPTIONS}")
 
         
     # DAG Flow
@@ -200,10 +245,10 @@ def youtube_video_pipeline():
     captions = fetch_captions(video_ids)
 
     # Publishing data to respective Kafka topics
-    publish_channel_info = publish_to_kafka(transformed_channel_data, CNST.KAFKA_TOPIC_CHANNEL)
-    publish_video_info = publish_to_kafka(video_info, CNST.KAFKA_TOPIC_VIDEO)
-    publish_video_comments = publish_to_kafka(comments, CNST.KAFKA_TOPIC_COMMENTS)
-    publish_video_captions = publish_to_kafka(captions, CNST.KAFKA_TOPIC_CAPTIONS)
+    publish_channel_info = publish_channels_to_kafka(transformed_channel_data)
+    publish_video_info = publish_videos_to_kafka(video_info)
+    publish_video_comments = publish_comments_to_kafka(comments)
+    publish_video_captions = publish_captions_to_kafka(captions)
 
     # Define dependencies
     kafka_setup_task >> [

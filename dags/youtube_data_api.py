@@ -111,8 +111,8 @@ class LoadDataYT(CL.YouTubeDataAPI):
             response = request.execute()
 
             captions = []
-            for item in response.get("items", []):
-                captions.append(item)
+            items = response.get("items", [])
+            captions.extend(items)
 
             logging.info(f"Total captions fetched: {len(captions)}")
             return captions
