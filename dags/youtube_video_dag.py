@@ -49,7 +49,7 @@ def youtube_video_pipeline():
         params = {
             "part": "snippet",
             "type": "video",
-            "q": "machine learning|deep learning -statistics",
+            "q": CNST.YT_VIDEO_QUERY,
             "maxResults": 2,
             "order": "viewCount",
             "publishedAfter": "2018-01-01T00:00:00Z",
@@ -64,6 +64,34 @@ def youtube_video_pipeline():
         """Converts JSON data to Polars DataFrame and extracts channel IDs."""
         df = pl.DataFrame(result)
         return df["channelId"].to_list()
+    
+    @task()
+    def fetch_channel_info(channel_ids):
+        """Fetches detailed channel information from the YouTube Data API."""
+        try:
+            BATCH_SIZE = 20
+            all_channel_data = []
+
+            for i in range(0, len(channel_ids), BATCH_SIZE):
+                batch = channel_ids[i: i + BATCH_SIZE]
+                params = {
+                    "part": "snippet,statistics",
+                    "id": ",".join(batch)
+                }
+
+                logging.info(f"Fetching details for channels: {params['id']}")
+                response = DataAPI.get_channels(params)
+
+                if response and "items" in response:
+                    all_channel_data.extend(response["items"])
+
+            logging.info(f"Successfully fetched details for {len(all_channel_data)} channels.")
+            transformed_result = TRANSFORM.transform_channel_data({"items": all_channel_data})
+            return transformed_result
+
+        except Exception as e:
+            logging.error(f"Error fetching channel data: {e}", exc_info=True)
+            return None
 
     @task()
     def extract_video_ids(search_results):
@@ -149,6 +177,7 @@ def youtube_video_pipeline():
     search_results = search_youtube()
     video_ids = extract_video_ids(search_results)
     channel_ids = extract_channel_ids(search_results)
+    transformed_channel_data = fetch_channel_info(channel_ids)
     video_info = fetch_video_info(video_ids)
     comments = fetch_comments(video_ids)
     captions = fetch_captions(video_ids)

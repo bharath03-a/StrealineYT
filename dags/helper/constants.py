@@ -12,3 +12,5 @@ KAFKA_CONF = {
 }
 
 KAFKA_TOPIC_NAME = 'yt_video_analytics'
+
+YT_VIDEO_QUERY = "machine learning|deep learning -statistics"
