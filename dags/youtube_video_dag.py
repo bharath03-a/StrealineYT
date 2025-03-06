@@ -142,9 +142,9 @@ def youtube_video_pipeline():
             
             for i in range(0, len(video_ids), BATCH_SIZE):
                 batch = video_ids[i: i + BATCH_SIZE]
-                params = {"part": "snippet", "id": ",".join(batch), "maxResults": 10}
+                params = {"part": "snippet", "videoId": ",".join(batch)}
                 logging.info(f"Fetching comments for videos: {params['id']}")
-                response = DataAPI.get_comments(params, max_comments=20)
+                response = DataAPI.get_comments(params, max_comments=5)
                 
                 if response:
                     for idx, video_id in enumerate(batch):
@@ -164,9 +164,9 @@ def youtube_video_pipeline():
             
             for i in range(0, len(video_ids), BATCH_SIZE):
                 batch = video_ids[i: i + BATCH_SIZE]
-                params = {"part": "snippet", "id": ",".join(batch)}
+                params = {"part": "snippet", "videoId": ",".join(batch)}
                 logging.info(f"Fetching captions for videos: {params['id']}")
-                response = DataAPI.get_captions(params)
+                response = DataAPI.get_captions(params, max_captions=5)
                 
                 if response:
                     for idx, video_id in enumerate(batch):

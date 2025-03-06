@@ -75,7 +75,6 @@ class LoadDataYT(CL.YouTubeDataAPI):
     def get_comments(self, params, max_comments=100):
         try:
             request = self.youtube_auth.commentThreads().list(**params)
-
             all_comments = []
 
             while request and len(all_comments) < max_comments:
@@ -86,7 +85,7 @@ class LoadDataYT(CL.YouTubeDataAPI):
                     all_comments = all_comments[:max_comments]
                     break
 
-            request = self.youtube_auth.commentThreads().list_next(request, response)
+                request = self.youtube_auth.commentThreads().list_next(request, response)
 
             logging.info(f"Total comments fetched: {len(all_comments)}")
             return all_comments
@@ -118,18 +117,24 @@ class LoadDataYT(CL.YouTubeDataAPI):
             return None
 
 
-    def get_captions(self, params):
+    def get_captions(self, params, max_captions=100):
+        """Fetches captions with pagination, similar to get_comment_list."""
         try:
             request = self.youtube_auth.captions().list(**params)
+            all_captions = []
 
-            response = request.execute()
+            while request and len(all_captions) < max_captions:
+                response = request.execute()
+                all_captions.extend(response.get("items", []))
 
-            captions = []
-            for item in response.get("items", []):
-                captions.append(item)
+                if len(all_captions) >= max_captions:
+                    all_captions = all_captions[:max_captions]
+                    break
 
-            logging.info(f"Total captions fetched: {len(captions)}")
-            return captions
+                request = self.youtube_auth.captions().list_next(request, response)
+
+            logging.info(f"Total captions fetched: {len(all_captions)}")
+            return all_captions
 
         except Exception as e:
             logging.error(f"An error occurred while fetching captions: {e}", exc_info=True)
