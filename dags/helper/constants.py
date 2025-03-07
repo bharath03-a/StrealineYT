@@ -17,3 +17,7 @@ KAFKA_TOPIC_COMMENTS = "youtube_video_comments"
 KAFKA_TOPIC_CAPTIONS = "youtube_video_captions"
 
 YT_VIDEO_QUERY = "machine learning|deep learning -statistics"
+
+# Mongo setup
+MONGODB_NAME = "youtube_api_info"
+MONGODB_COLLECTIONS = ["youtube_channel_info", "youtube_video_info", "youtube_video_comments", "youtube_video_captions"]
