@@ -5,6 +5,9 @@ import logging
 import json
 import polars as pl
 from airflow.decorators import dag, task
+from airflow.providers.mongo.hooks.mongo import MongoHook
+from pymongo import MongoClient
+from airflow.models import Variable
 
 # importing custom libraries
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -251,6 +254,21 @@ def youtube_video_pipeline():
         producer.flush()
         logging.info(f"Published {len(data)} video records to Kafka topic: {CNST.KAFKA_TOPIC_VIDEO}")
 
+    @task
+    def insert_video_info_mongo(data):
+        """Function to insert data into MongoDB collection"""
+        try:
+            client = MongoClient(Variable.get("MONGODB_URI"))
+        
+            
+            db = client[CNST.MONGODB_NAME]
+            collection = db[CNST.MONGODB_COLLECTIONS[1]]
+            
+            collection.insert_many(data)
+            print(f"Inserted {len(data)} records into {CNST.MONGODB_COLLECTIONS[1]}")
+        except Exception as e:
+            logging.error(f"Error inserting video data into MongoDB: {e}", exc_info=True)
+
     @task()
     def publish_channels_to_kafka(data):
         """Publishes transformed channel data to Kafka topic."""
@@ -265,6 +283,21 @@ def youtube_video_pipeline():
         
         producer.flush()
         logging.info(f"Published {len(data)} channel records to Kafka topic: {CNST.KAFKA_TOPIC_CHANNEL}")
+    
+    @task
+    def insert_channel_info_mongo(data):
+        """Function to insert data into MongoDB collection"""
+        try:
+            client = MongoClient(Variable.get("MONGODB_URI"))
+        
+            
+            db = client[CNST.MONGODB_NAME]
+            collection = db[CNST.MONGODB_COLLECTIONS[0]]
+            
+            collection.insert_many(data)
+            print(f"Inserted {len(data)} records into {CNST.MONGODB_COLLECTIONS[0]}")
+        except Exception as e:
+            logging.error(f"Error inserting video data into MongoDB: {e}", exc_info=True)
 
     @task()
     def publish_comments_to_kafka(data):
@@ -280,6 +313,21 @@ def youtube_video_pipeline():
         
         producer.flush()
         logging.info(f"Published {len(data)} comment records to Kafka topic: {CNST.KAFKA_TOPIC_COMMENTS}")
+    
+    @task
+    def insert_comment_info_mongo(data):
+        """Function to insert data into MongoDB collection"""
+        try:
+            client = MongoClient(Variable.get("MONGODB_URI"))
+        
+            
+            db = client[CNST.MONGODB_NAME]
+            collection = db[CNST.MONGODB_COLLECTIONS[2]]
+            
+            collection.insert_many(data)
+            print(f"Inserted {len(data)} records into {CNST.MONGODB_COLLECTIONS[2]}")
+        except Exception as e:
+            logging.error(f"Error inserting video data into MongoDB: {e}", exc_info=True)
 
     @task()
     def publish_captions_to_kafka(data):
@@ -295,6 +343,21 @@ def youtube_video_pipeline():
         
         producer.flush()
         logging.info(f"Published {len(data)} caption records to Kafka topic: {CNST.KAFKA_TOPIC_CAPTIONS}")
+    
+    @task
+    def insert_captions_info_mongo(data):
+        """Function to insert data into MongoDB collection"""
+        try:
+            client = MongoClient(Variable.get("MONGODB_URI"))
+        
+            
+            db = client[CNST.MONGODB_NAME]
+            collection = db[CNST.MONGODB_COLLECTIONS[3]]
+            
+            collection.insert_many(data)
+            print(f"Inserted {len(data)} records into {CNST.MONGODB_COLLECTIONS[3]}")
+        except Exception as e:
+            logging.error(f"Error inserting video data into MongoDB: {e}", exc_info=True)
 
         
     # DAG Flow
@@ -324,6 +387,12 @@ def youtube_video_pipeline():
     publish_comment_task = publish_comments_to_kafka(transformed_comment_data)
     publish_caption_task = publish_captions_to_kafka(transformed_caption_data)
 
+    # mongo insert
+    write_channels_mongo = insert_channel_info_mongo(transformed_channel_data)
+    write_videos_mongo = insert_video_info_mongo(transformed_video_data)
+    write_comments_mongo = insert_comment_info_mongo(transformed_comment_data)
+    write_captions_mongo = insert_captions_info_mongo(transformed_caption_data)
+
     # setting up dependencies
     [kafka_setup_task, mongodb_setup_task] >> search_results
     search_results >> [video_ids, channel_ids]
@@ -339,10 +408,10 @@ def youtube_video_pipeline():
     raw_caption_data >> transformed_caption_data
     
     # Publishing dependencies
-    transformed_channel_data >> publish_channel_task
-    transformed_video_data >> publish_video_task
-    transformed_comment_data >> publish_comment_task
-    transformed_caption_data >> publish_caption_task
+    transformed_channel_data >> publish_channel_task >> write_channels_mongo
+    transformed_video_data >> publish_video_task >> write_videos_mongo
+    transformed_comment_data >> publish_comment_task >> write_comments_mongo
+    transformed_caption_data >> publish_caption_task >> write_captions_mongo
 
 # Instantiating the DAG for Airflow
 video_dag_instance = youtube_video_pipeline()

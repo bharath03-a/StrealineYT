@@ -20,3 +20,4 @@ polars==1.22.0
 # astronomer comes with airflow
 confluent-kafka==2.8.0
 pymongo[srv]==4.11.2
+apache-airflow-providers-mongo==5.0.1
