@@ -11,6 +11,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 from youtube_data_api import LoadDataYT
 import youtube_transform as TRANSFORM
 from helper.kafka_client import KafkaClientManager
+from helper.mongo_client import MongoDBClient
 import helper.constants as CNST
 
 DataAPI = LoadDataYT()
@@ -43,6 +44,13 @@ def youtube_video_pipeline():
 
         for topic in topics:
             kafka_client.check_create_topic(topic)
+        return True
+
+    @task()
+    def mongodb_setup():
+        """Creates a Kafka topic and initializes a Kafka producer."""
+        mongo_client = MongoDBClient()
+        mongo_client.setup_database(CNST.MONGODB_NAME, CNST.MONGODB_COLLECTIONS)
         return True
 
     @task()
@@ -291,6 +299,7 @@ def youtube_video_pipeline():
         
     # DAG Flow
     kafka_setup_task = kafka_setup()
+    mongodb_setup_task = mongodb_setup()
     
     # Search and extract IDs
     search_results = search_youtube()
@@ -316,7 +325,7 @@ def youtube_video_pipeline():
     publish_caption_task = publish_captions_to_kafka(transformed_caption_data)
 
     # setting up dependencies
-    kafka_setup_task >> search_results
+    [kafka_setup_task, mongodb_setup_task] >> search_results
     search_results >> [video_ids, channel_ids]
     
     # Data fetching dependencies
