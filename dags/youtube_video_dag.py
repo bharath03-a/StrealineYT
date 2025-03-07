@@ -337,33 +337,3 @@ def youtube_video_pipeline():
 
 # Instantiating the DAG for Airflow
 video_dag_instance = youtube_video_pipeline()
-
-    # can also get top or most popular videos in a certain search category
-    # see if we can input data to DAG so we can input params
-    # @task()
-    # def search_top_youtube():
-    #     """Fetches search results from YouTube API."""
-    #     params = {
-    #         "part": "snippet",
-    #         "type": "video",
-    #         "chart": "mostPopular",
-    #         "q": "machine learning|deep learning -statistics",
-    #         "maxResults": 2,
-    #         "order": "viewCount",
-    #         "publishedAfter": "2018-01-01T00:00:00Z",
-    #     }
-
-    #     search_results = DataAPI.get_search_results(params, max_results=5)
-    #     results = TRANSFORM.transform_youtube_video_results(search_results)
-    #     return results
-
-    # can also get comment threads for a channel id - allThreadsRelatedToChannelId
-
-    # 'part': 'snippet,replies',
-    # 'allThreadsRelatedToChannelId': "UC_x5XG1OV2P6uZZ5FSM9Ttw", # comment id ah LoL
-    # 'maxResults': 5,
-    # 'textFormat': 'plainText'
-
-    # change the youtube comment function to get more results than just comments - as it has a lot other features to such as comment likes, comment replies
-    # we have to search using commentthread id I guess for replies - no use comment.list() using the commentThreadID
-    # not necessarily a good idea for this BTW
