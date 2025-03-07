@@ -172,7 +172,7 @@ def youtube_video_pipeline():
                 else:
                     all_comments.extend([])
 
-            return all_comments
+            return {"items": all_comments}
         except Exception as e:
             logging.error(f"Error fetching comments: {e}", exc_info=True)
             return None
