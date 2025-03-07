@@ -88,11 +88,25 @@ def youtube_video_pipeline():
                     all_channel_data.extend(response["items"])
 
             logging.info(f"Successfully fetched details for {len(all_channel_data)} channels.")
-            transformed_result = TRANSFORM.transform_channel_data({"items": all_channel_data})
-            return transformed_result
+            return {"items": all_channel_data}
 
         except Exception as e:
             logging.error(f"Error fetching channel data: {e}", exc_info=True)
+            return None
+        
+    @task()
+    def transform_channel_info(raw_channel_data):
+        """Transforms raw channel data into the desired format."""
+        if not raw_channel_data:
+            logging.error("No channel data to transform")
+            return None
+        
+        try:
+            transformed_result = TRANSFORM.transform_channel_data(raw_channel_data)
+            logging.info(f"Successfully transformed {len(raw_channel_data['items'])} channel records")
+            return transformed_result
+        except Exception as e:
+            logging.error(f"Error transforming channel data: {e}", exc_info=True)
             return None
 
     @task()
@@ -128,6 +142,21 @@ def youtube_video_pipeline():
             return None
 
     @task()
+    def transform_video_info(raw_video_data):
+        """Transforms raw video data into the desired format."""
+        if not raw_video_data:
+            logging.error("No video data to transform")
+            return None
+        
+        try:
+            transformed_result = TRANSFORM.transform_video_data(raw_video_data)
+            logging.info(f"Successfully transformed {len(raw_video_data)} video records")
+            return transformed_result
+        except Exception as e:
+            logging.error(f"Error transforming video data: {e}", exc_info=True)
+            return None
+
+    @task()
     def fetch_comments(video_ids):
         """Fetches comments for each video individually."""
         try:
@@ -147,6 +176,21 @@ def youtube_video_pipeline():
         except Exception as e:
             logging.error(f"Error fetching comments: {e}", exc_info=True)
             return None
+    
+    @task()
+    def transform_comment_info(raw_comment_data):
+        """Transforms raw comment data into the desired format."""
+        if not raw_comment_data or not raw_comment_data.get("items"):
+            logging.error("No comment data to transform")
+            return []
+        
+        try:
+            transformed_result = TRANSFORM.transform_comment_data(raw_comment_data)
+            logging.info(f"Successfully transformed {len(raw_comment_data['items'])} comment records")
+            return transformed_result
+        except Exception as e:
+            logging.error(f"Error transforming comment data: {e}", exc_info=True)
+            return []
 
     @task()
     def fetch_captions(video_ids):
@@ -168,6 +212,21 @@ def youtube_video_pipeline():
         except Exception as e:
             logging.error(f"Error fetching captions: {e}", exc_info=True)
             return None
+        
+    @task()
+    def transform_caption_info(raw_caption_data):
+        """Transforms raw caption data into the desired format."""
+        if not raw_caption_data:
+            logging.error("No caption data to transform")
+            return []
+        
+        try:
+            transformed_result = TRANSFORM.transform_caption_data(raw_caption_data)
+            logging.info(f"Successfully transformed {len(raw_caption_data)} caption records")
+            return transformed_result
+        except Exception as e:
+            logging.error(f"Error transforming caption data: {e}", exc_info=True)
+            return []
     
     @task()
     def publish_videos_to_kafka(data):
@@ -232,31 +291,49 @@ def youtube_video_pipeline():
         
     # DAG Flow
     kafka_setup_task = kafka_setup()
-
-    # Fetch Data
+    
+    # Search and extract IDs
     search_results = search_youtube()
     video_ids = extract_video_ids(search_results)
     channel_ids = extract_channel_ids(search_results)
+    
+    # Fetch raw data
+    raw_channel_data = fetch_channel_info(channel_ids)
+    raw_video_data = fetch_video_info(video_ids)
+    raw_comment_data = fetch_comments(video_ids)
+    raw_caption_data = fetch_captions(video_ids)
+    
+    # Transform data
+    transformed_channel_data = transform_channel_info(raw_channel_data)
+    transformed_video_data = transform_video_info(raw_video_data)
+    transformed_comment_data = transform_comment_info(raw_comment_data)
+    transformed_caption_data = transform_caption_info(raw_caption_data)
+    
+    # Publish to Kafka
+    publish_channel_task = publish_channels_to_kafka(transformed_channel_data)
+    publish_video_task = publish_videos_to_kafka(transformed_video_data)
+    publish_comment_task = publish_comments_to_kafka(transformed_comment_data)
+    publish_caption_task = publish_captions_to_kafka(transformed_caption_data)
 
-    # Fetching additional information
-    transformed_channel_data = fetch_channel_info(channel_ids)
-    video_info = fetch_video_info(video_ids)
-    comments = fetch_comments(video_ids)
-    captions = fetch_captions(video_ids)
-
-    # Publishing data to respective Kafka topics
-    publish_channel_info = publish_channels_to_kafka(transformed_channel_data)
-    publish_video_info = publish_videos_to_kafka(video_info)
-    publish_video_comments = publish_comments_to_kafka(comments)
-    publish_video_captions = publish_captions_to_kafka(captions)
-
-    # Define dependencies
-    kafka_setup_task >> [
-        publish_channel_info,
-        publish_video_info,
-        publish_video_comments,
-        publish_video_captions
-    ]
+    # setting up dependencies
+    kafka_setup_task >> search_results
+    search_results >> [video_ids, channel_ids]
+    
+    # Data fetching dependencies
+    video_ids >> [raw_video_data, raw_comment_data, raw_caption_data]
+    channel_ids >> raw_channel_data
+    
+    # Transform dependencies
+    raw_channel_data >> transformed_channel_data
+    raw_video_data >> transformed_video_data
+    raw_comment_data >> transformed_comment_data
+    raw_caption_data >> transformed_caption_data
+    
+    # Publishing dependencies
+    transformed_channel_data >> publish_channel_task
+    transformed_video_data >> publish_video_task
+    transformed_comment_data >> publish_comment_task
+    transformed_caption_data >> publish_caption_task
 
 # Instantiating the DAG for Airflow
 video_dag_instance = youtube_video_pipeline()
