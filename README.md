@@ -4,7 +4,7 @@
   <img src="https://upload.wikimedia.org/wikipedia/commons/4/42/YouTube_icon_%282013-2017%29.png" alt="YouTube Logo" width="300"/>
 </p>
 <p align="center">
-  <img src="./img/new_dag.png" alt="YouTube Logo" width="500"/>
+  <img src="./img/dag.png" alt="YouTube Logo" width="500"/>
 </p>
 
 
