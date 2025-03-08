@@ -27,3 +27,4 @@ backup/
 
 airflow.yaml
 kafka.yaml
+notebooks/
