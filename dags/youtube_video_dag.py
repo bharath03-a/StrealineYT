@@ -43,7 +43,8 @@ def youtube_video_pipeline():
             CNST.KAFKA_TOPIC_VIDEO,
             CNST.KAFKA_TOPIC_CHANNEL,
             CNST.KAFKA_TOPIC_COMMENTS,
-            CNST.KAFKA_TOPIC_CAPTIONS
+            CNST.KAFKA_TOPIC_CAPTIONS,
+            CNST.KAFKA_TOPIC_TRANSCRIPTS
         ]
 
         for topic in topics:
@@ -466,24 +467,28 @@ def youtube_video_pipeline():
     raw_video_data = fetch_video_info(video_ids)
     raw_comment_data = fetch_comments(video_ids)
     raw_caption_data = fetch_captions(video_ids)
+    raw_transcript_data = fetch_transcripts(video_ids)
     
     # Transform data
     transformed_channel_data = transform_channel_info(raw_channel_data)
     transformed_video_data = transform_video_info(raw_video_data)
     transformed_comment_data = transform_comment_info(raw_comment_data)
     transformed_caption_data = transform_caption_info(raw_caption_data)
+    transformed_transcript_data = transform_transcript_info(raw_transcript_data)
     
     # Publish to Kafka
     publish_channel_task = publish_channels_to_kafka(transformed_channel_data)
     publish_video_task = publish_videos_to_kafka(transformed_video_data)
     publish_comment_task = publish_comments_to_kafka(transformed_comment_data)
     publish_caption_task = publish_captions_to_kafka(transformed_caption_data)
+    publish_transcript_task = publish_transcripts_to_kafka(transformed_transcript_data)
 
     # mongo insert
     write_channels_mongo = insert_channel_info_mongo(transformed_channel_data)
     write_videos_mongo = insert_video_info_mongo(transformed_video_data)
     write_comments_mongo = insert_comment_info_mongo(transformed_comment_data)
     write_captions_mongo = insert_captions_info_mongo(transformed_caption_data)
+    write_transcripts_mongo = insert_transcript_info_mongo(transformed_transcript_data)
 
     # setting up dependencies
     [kafka_setup_task, mongodb_setup_task] >> search_results
@@ -498,12 +503,14 @@ def youtube_video_pipeline():
     raw_video_data >> transformed_video_data
     raw_comment_data >> transformed_comment_data
     raw_caption_data >> transformed_caption_data
+    raw_transcript_data >> transformed_transcript_data
     
     # Publishing dependencies
     transformed_channel_data >> publish_channel_task >> write_channels_mongo
     transformed_video_data >> publish_video_task >> write_videos_mongo
     transformed_comment_data >> publish_comment_task >> write_comments_mongo
     transformed_caption_data >> publish_caption_task >> write_captions_mongo
+    transformed_transcript_data >> publish_transcript_task >> write_transcripts_mongo
 
 # Instantiating the DAG for Airflow
 video_dag_instance = youtube_video_pipeline()
