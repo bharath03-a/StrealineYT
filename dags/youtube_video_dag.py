@@ -8,6 +8,7 @@ from airflow.decorators import dag, task
 from airflow.providers.mongo.hooks.mongo import MongoHook
 from pymongo import MongoClient
 from airflow.models import Variable
+from youtube_transcript_api import YouTubeTranscriptApi
 
 # importing custom libraries
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -358,6 +359,97 @@ def youtube_video_pipeline():
             print(f"Inserted {len(data)} records into {CNST.MONGODB_COLLECTIONS[3]}")
         except Exception as e:
             logging.error(f"Error inserting video data into MongoDB: {e}", exc_info=True)
+    
+
+    @task()
+    def fetch_transcripts(video_ids):
+        """Fetches transcripts for each video individually using youtube-transcript-api."""
+        try:
+            all_transcripts = []
+            
+            for video_id in video_ids:
+                logging.info(f"Fetching transcript for video: {video_id}")
+                try:
+                    transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
+                    
+                    for segment in transcript_list:
+                        segment['videoId'] = video_id
+                    
+                    all_transcripts.append({
+                        'videoId': video_id,
+                        'transcript': transcript_list
+                    })
+                    
+                except Exception as e:
+                    logging.warning(f"Could not fetch transcript for video {video_id}: {e}")
+            
+            logging.info(f"Successfully fetched transcripts for {len(all_transcripts)} videos")
+            return all_transcripts
+        except Exception as e:
+            logging.error(f"Error fetching transcripts: {e}", exc_info=True)
+            return []
+
+    @task()
+    def transform_transcript_info(raw_transcript_data):
+        """Transforms raw transcript data into the desired format."""
+        if not raw_transcript_data:
+            logging.error("No transcript data to transform")
+            return []
+        
+        try:
+            transformed_result = []
+            
+            for transcript_item in raw_transcript_data:
+                video_id = transcript_item['videoId']
+                transcript = transcript_item['transcript']
+                total_duration = sum(segment.get('duration', 0) for segment in transcript)
+                word_count = sum(len(segment.get('text', '').split()) for segment in transcript)
+                
+                transformed_result.append({
+                    'videoId': video_id,
+                    'transcript': transcript,
+                    'transcriptMetrics': {
+                        'segmentCount': len(transcript),
+                        'totalDuration': total_duration,
+                        'wordCount': word_count
+                    },
+                    'processedDate': pendulum.now().to_iso8601_string()
+                })
+            
+            logging.info(f"Successfully transformed {len(raw_transcript_data)} transcript records")
+            return transformed_result
+        except Exception as e:
+            logging.error(f"Error transforming transcript data: {e}", exc_info=True)
+            return []
+
+    @task()
+    def publish_transcripts_to_kafka(data):
+        """Publishes transformed transcript data to Kafka topic."""
+        kafka_client = KafkaClientManager(CNST.KAFKA_CONF)
+        producer_name = f"yt_transcript_producer_{pendulum.now().format('YYYYMMDDHHMMSS')}"
+        producer = kafka_client.create_producer(producer_name)
+
+        for key, record in enumerate(data):
+            print(record)
+            producer.produce(CNST.KAFKA_TOPIC_TRANSCRIPTS, key=str(key).encode('utf-8'), value=json.dumps(record))
+            producer.poll(0)
+        
+        producer.flush()
+        logging.info(f"Published {len(data)} transcript records to Kafka topic: {CNST.KAFKA_TOPIC_TRANSCRIPTS}")
+
+    @task
+    def insert_transcript_info_mongo(data):
+        """Function to insert transcript data into MongoDB collection"""
+        try:
+            client = MongoClient(Variable.get("MONGODB_URI"))
+            
+            db = client[CNST.MONGODB_NAME]
+            collection = db[CNST.MONGODB_COLLECTIONS[4]]
+            
+            collection.insert_many(data)
+            print(f"Inserted {len(data)} records into {CNST.MONGODB_COLLECTIONS[4]}")
+        except Exception as e:
+            logging.error(f"Error inserting transcript data into MongoDB: {e}", exc_info=True)
 
         
     # DAG Flow

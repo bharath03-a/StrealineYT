@@ -21,3 +21,4 @@ polars==1.22.0
 confluent-kafka==2.8.0
 pymongo[srv]==4.11.2
 apache-airflow-providers-mongo==5.0.1
+youtube-transcript-api==0.6.3
