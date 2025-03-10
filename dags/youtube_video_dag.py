@@ -506,11 +506,11 @@ def youtube_video_pipeline():
     raw_transcript_data >> transformed_transcript_data
     
     # Publishing dependencies
-    transformed_channel_data >> publish_channel_task >> write_channels_mongo
-    transformed_video_data >> publish_video_task >> write_videos_mongo
-    transformed_comment_data >> publish_comment_task >> write_comments_mongo
-    transformed_caption_data >> publish_caption_task >> write_captions_mongo
-    transformed_transcript_data >> publish_transcript_task >> write_transcripts_mongo
+    transformed_channel_data >> [publish_channel_task, write_channels_mongo]
+    transformed_video_data >> [publish_video_task, write_videos_mongo]
+    transformed_comment_data >> [publish_comment_task, write_comments_mongo]
+    transformed_caption_data >> [publish_caption_task, write_captions_mongo]
+    transformed_transcript_data >> [publish_transcript_task, write_transcripts_mongo]
 
 # Instantiating the DAG for Airflow
 video_dag_instance = youtube_video_pipeline()
