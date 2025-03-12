@@ -9,6 +9,7 @@ from airflow.providers.mongo.hooks.mongo import MongoHook
 from pymongo import MongoClient
 from airflow.models import Variable
 from youtube_transcript_api import YouTubeTranscriptApi
+from airflow.models.param import Param
 
 # importing custom libraries
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -33,6 +34,9 @@ default_args = {
     start_date=pendulum.now("UTC"),
     catchup=False,
     tags=["youtube", "videos"],
+    params={
+        "query": CNST.YT_VIDEO_QUERY,
+        }
 )
 def youtube_video_pipeline():
     @task()
@@ -59,14 +63,13 @@ def youtube_video_pipeline():
         return True
 
     @task()
-    def search_youtube(**kwargs):
+    def search_youtube(**context):
         """Fetches search results from YouTube API."""
-        dag_params = kwargs.get('dag_run').conf if kwargs.get('dag_run') else {}
 
         params = {
             "part": "snippet",
             "type": "video",
-            "q": dag_params.get("query", CNST.YT_VIDEO_QUERY),
+            "q": context["params"]["query"],
             "maxResults": 2,
             "order": "viewCount",
             "publishedAfter": "2018-01-01T00:00:00Z",
