@@ -59,12 +59,14 @@ def youtube_video_pipeline():
         return True
 
     @task()
-    def search_youtube():
+    def search_youtube(**kwargs):
         """Fetches search results from YouTube API."""
+        dag_params = kwargs.get('dag_run').conf if kwargs.get('dag_run') else {}
+
         params = {
             "part": "snippet",
             "type": "video",
-            "q": CNST.YT_VIDEO_QUERY,
+            "q": dag_params.get("query", CNST.YT_VIDEO_QUERY),
             "maxResults": 2,
             "order": "viewCount",
             "publishedAfter": "2018-01-01T00:00:00Z",
