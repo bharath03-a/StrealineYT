@@ -70,12 +70,14 @@ def youtube_video_pipeline():
             "part": "snippet",
             "type": "video",
             "q": context["params"]["query"],
-            "maxResults": 2,
+            "maxResults": 15,
             "order": "viewCount",
-            "publishedAfter": "2018-01-01T00:00:00Z",
+            "publishedAfter": "2021-01-01T00:00:00Z",
+            "relevanceLanguage": "en",
+            "videoDuration": "medium"
         }
 
-        search_results = DataAPI.get_search_results(params, max_results=5)
+        search_results = DataAPI.get_search_results(params, max_results=60)
         results = TRANSFORM.transform_youtube_video_results(search_results)
         return results
 
@@ -183,7 +185,7 @@ def youtube_video_pipeline():
             for video_id in video_ids:
                 params = {"part": "snippet", "videoId": video_id}
                 logging.info(f"Fetching comments for video: {video_id}")
-                response = DataAPI.get_comments(params, max_comments=5)
+                response = DataAPI.get_comments(params, max_comments=50)
                 
                 if response is not None:
                     all_comments.extend(response)

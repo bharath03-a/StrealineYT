@@ -1,0 +1,8 @@
+scikit-learn==1.6.1
+pyLDAvis==3.4.1
+gensim==4.3.3
+mlflow==2.20.4
+nltk==3.9.1
+wordcloud==1.9.4
+python-dotenv==1.0.1
+bertopic==0.16.4
