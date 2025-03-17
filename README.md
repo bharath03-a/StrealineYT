@@ -43,12 +43,14 @@ The primary objective is to perform topic modeling on streaming YouTube video da
 ## How to Use:
 
 ### 1. Clone the repository:
+
    ```bash
-   git clone [<repository_url>](https://github.com/bharath03-a/StrealineYT)
+   git clone https://github.com/bharath03-a/StrealineYT
    ```
 
 ### 2. Set Up Environment Variables
 Create a .env file in the root directory and add the following credentials:
+
     ```bash
     GOOGLE_API_KEY=<your_google_api_key>
     MONGODB_URI=<your_mongodb_uri>
@@ -59,10 +61,12 @@ Create a .env file in the root directory and add the following credentials:
 - Install Docker if not already installed.
 - Navigate to the folder containing the docker-compose.yml file.
 - Run the following command to start the services:
-    ``bash
+
+    ```bash
     docker-compose up -d
     ```
 - Verify that all services are running:
+
     ```bash
     docker ps
     ```
@@ -78,6 +82,7 @@ Open Kafka Confluent UI at: http://localhost:9021
 ## Running Spark Streaming & Topic Modeling
 ### 1. Set Up a Virtual Environment
 - Create a virtual environment using conda:
+
     ```bash
     conda create --name youtube-streaming-pipeline python=3.8 -y
     conda activate youtube-streaming-pipeline
@@ -85,6 +90,7 @@ Open Kafka Confluent UI at: http://localhost:9021
 
 ### 2. Install Dependencies
 - Navigate to the spark/ directory and install dependencies:
+
     ```bash
     pip install -r requirements.txt
     ```
