@@ -36,10 +36,6 @@ The primary objective is to perform topic modeling on streaming YouTube video da
 - **LDA (Latent Dirichlet Allocation)**: Identifies **hidden topics** within the dataset.
 - **BERTopic**: Uses **BERT embeddings** to extract **contextually rich topics**.
 
-### 6. Storage & Visualization
-- Stores processed data in **PostgreSQL / Elasticsearch**.
-- Generates **dashboards** for topic trends and insights.
-
 ## How to Use:
 
 ### 1. Clone the repository:
