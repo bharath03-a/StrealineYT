@@ -50,7 +50,8 @@ The primary objective is to perform topic modeling on streaming YouTube video da
 
 ### 2. Set Up Environment Variables
 Create a .env file in the root directory and add the following credentials:
-    ```bash
+
+    ```sh
     GOOGLE_API_KEY=<your_google_api_key>
     MONGODB_URI=<your_mongodb_uri>
     YOUTUBE_OAUTH_CLIENT=<your_youtube_oauth_client>
