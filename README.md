@@ -50,7 +50,6 @@ The primary objective is to perform topic modeling on streaming YouTube video da
 
 ### 2. Set Up Environment Variables
 Create a .env file in the root directory and add the following credentials:
-
     ```bash
     GOOGLE_API_KEY=<your_google_api_key>
     MONGODB_URI=<your_mongodb_uri>
@@ -60,6 +59,7 @@ Create a .env file in the root directory and add the following credentials:
 ### 3. Install Docker and Run Services
 - Install Docker if not already installed.
 - Navigate to the folder containing the docker-compose.yml file.
+- create folders - `logs`, `config`, `plugins` or run `mkdir logs`, `mkdir config`, `mkdir plugins`
 - Run the following command to start the services:
 
     ```bash
